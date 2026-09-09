@@ -6,9 +6,9 @@ Ultimo aggiornamento: 2026-09-09 · Release di lavoro: **0.7.0**
 
 - JW-047 — Pulizia implementata: rimozione di 4901 file desktop tracked, conservati 15 servizi richiesti dalla webapp; rimosso anche lo script obsoleto release-06. Formattazione uniforme e package root solo web. Recupero completo dal tag v0.6.1.
 - JW-048 — Completato: account SQLite, password hash scrypt, ruoli, sessioni/revoche; dalla 0.7 collegati al runtime.
-- JW-049 — Implementato e verificato localmente: login/logout/cambio password, GUI utenti, archivi separati per chat/workspace/plugin/export, SSE revocabile, adozione offline dei dati precedenti al primo admin senza spostarli, recupero password locale, credenziale worker separata, terminale/MCP LAN solo admin, backup/ripristino di tutti gli account. Suite 65 test: 63 passati e 2 POSIX esclusi su Windows. Browser desktop: login admin IT, lista utenti, logout; login utente normale EN senza gestione utenti, logout. CI Docker della revisione in attesa.
+- JW-049 — Implementato e verificato localmente: login/logout/cambio password, GUI utenti, archivi separati per chat/workspace/plugin/export, SSE revocabile, adozione offline dei dati precedenti al primo admin senza spostarli, recupero password locale, credenziale worker separata, terminale/MCP LAN solo admin, backup/ripristino di tutti gli account. Suite 65 test: 63 passati e 2 POSIX esclusi su Windows. Browser desktop: login admin IT, lista utenti, logout; login utente normale EN senza gestione utenti, logout. CI Docker [34388617707](https://github.com/vince87/jenny-web/actions/runs/34388617707), revisione a9c6ebf: 65/65 test, zero esclusi, worker reale, login Compose prima/dopo riavvio e persistenza riusciti.
 
-Prossimo passo concreto: concludere CI Docker 0.7.0, poi prova sul server con backup e procedura LOGIN-WEB.md. Rimangono collaudo mobile/flusso agente completo e JW-045 (porting desktop, non incluso in questa tranche). Nessun dato del server dell'utente è stato modificato.
+Prossimo passo concreto: prova sul server con backup e procedura LOGIN-WEB.md; pubblicazione della 0.7.0 dopo CI riuscita. Rimangono collaudo mobile/flusso agente completo e JW-045 (porting desktop, non incluso in questa tranche). Nessun dato del server dell'utente è stato modificato.
 
 ## Aggiornamento SearXNG 0.6.1
 

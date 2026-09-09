@@ -4,7 +4,7 @@ Suite locale Node 24: **65 test, 63 superati, 2 POSIX esclusi su Windows, zero f
 
 Browser desktop con dati fittizi locali: login admin IT, lista utenti, logout; login utente normale EN, assenza gestione utenti, logout. Layout login osservato. Non verificati cambio password/creazione utenti tramite interazione browser, mobile, più schede simultanee o flusso completo agente su modello reale: queste funzioni hanno controlli HTTP/statici dove indicato.
 
-CI Docker per questa revisione in attesa. Aggiunto smoke Compose con inizializzazione offline di account fittizio, login/accesso workspace/logout prima e dopo riavvio. Non è stato aggiornato il server domestico; nessun modello reale eseguito in questo collaudo.
+[CI Docker 34388617707](https://github.com/vince87/jenny-web/actions/runs/34388617707), revisione `a9c6ebf`: **65/65 test superati, zero fallimenti o esclusioni**. Build Linux, worker reale non-root/offline/source read-only, inizializzazione offline di account fittizio, login/accesso workspace/logout prima e dopo riavvio e persistenza riusciti. Le revisioni successive di questa release aggiornano soltanto documentazione. Non è stato aggiornato il server domestico; nessun modello reale eseguito in questo collaudo.
 
 ## Evidenza storica 0.6.2
 
