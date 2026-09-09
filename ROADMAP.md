@@ -10,11 +10,11 @@ Ultimo aggiornamento: 2026-09-09 · Release di lavoro: **0.6.0**
 | JW-041 | Implementato con limiti | Lettura pagine/link, blocco reti private, ricerca Brave con chiave GUI; lettura pubblica reale riuscita. DuckDuckGo bloccato anti-bot; Brave non provato senza chiave. Non è un browser JavaScript |
 | JW-042 | Implementato, GUI da collaudare | Catalogo locale Web/Terminale, connessioni MCP; installa, abilita, disabilita, rimuovi; configurazione persistita, credenziali non esposte nell'API |
 | JW-043 | Parziale | MCP Streamable HTTP 2025-11-25, tools/list paginato, tools/call JSON/SSE, bearer HTTPS, chiusura sessione; mock HTTP reale. Mancano stdio, OAuth, risorse/prompt e collaudo server terzo |
-| JW-044 | Parziale | Terminale batch tramite worker isolato, coda e approvazioni testate. Mancano PTY e integrazione desktop originale; esecuzione Docker worker da collaudare |
+| JW-044 | Parziale | Terminale batch tramite worker isolato, coda e approvazioni testate. Smoke Docker reale riuscito: non-root, rete assente, source read-only e nessun write-back. Mancano PTY e integrazione desktop originale |
 | JW-045 | Da fare | Portare catalogo/pacchetti e strumenti desktop originali con runtime dedicato e confini di sicurezza; non equivalgono alle connessioni MCP |
-| JW-046 | Predisposto | CI GitHub Linux: build Docker, suite, Compose, non-root e persistenza. Aggiornare validazione dopo esito reale |
+| JW-046 | Completato | CI GitHub Linux run 34343263897: build Docker, 54/54 test senza esclusioni, terminale isolato reale, Compose, non-root e persistenza riusciti |
 
-Prossimo passo concreto: eseguire CI Docker, quindi prova dell'utente sul server per thinking, chiave ricerca, server MCP e worker. Non dichiarare completati gli aspetti desktop non portati.
+Prossimo passo concreto: prova dell'utente sul server per thinking, chiave ricerca, server MCP e worker; poi JW-045 (runtime degli strumenti desktop). Non dichiarare completati gli aspetti desktop non portati.
 
 Questo file è il registro principale del progetto. A ogni ripresa si leggono prima questa roadmap, `AGENTS.md` e `VALIDAZIONE-WEB.md`. Le attività mantengono il loro ID tra una release e l'altra. Le date delle versioni future non sono ancora fissate.
 
@@ -60,7 +60,7 @@ Queste tre attività hanno codice e controlli statici, ma non vengono equiparate
 
 | ID | Priorità | Stato | Lavoro | Criterio di completamento |
 | --- | --- | --- | --- | --- |
-| JW-020 | P0 | Bloccato | Build e avvio Docker effettivi | Health OK, utente non root, volumi scrivibili, riavvio senza perdita chat/file; serve Docker disponibile |
+| JW-020 | P0 | Completato per smoke CI | Build/avvio Docker effettivi, health, non-root, volume scrivibile e marker preservato al riavvio; run 34343263897. Prova completa dati personali sul server ancora separata |
 | JW-021 | P0 | Da collaudare | GUI desktop/mobile IT/EN | Flusso completo chat→tool→approvazione→editor; temi, zoom, tastiera, selettore lingua; richiede prova browser |
 | JW-022 | P0 | Bloccato | Ollama e modello reali sul server | Misurare caricamento, token/s, contesto, qualità tool e conflitti con altri servizi; manca accesso al server |
 | JW-023 | P1 | Da collaudare in browser | Snapshot e ripristino implementati nella 0.4 | Test filesystem: 30 copie, riavvio, isolamento e conflitti. GUI IT/EN con confronto e caricamento nell’editor; salvataggio esplicito |

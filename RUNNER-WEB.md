@@ -42,6 +42,6 @@ Per un servizio persistente configurare questi valori in un file ambiente protet
 - Un job interrotto non viene ripetuto automaticamente. Un job running senza risposta scade dopo due minuti alla successiva lettura della coda. Un container mantiene anche il proprio timeout se il worker si interrompe.
 - Viene eseguita la copia del workspace presente all'avvio del worker: evitare modifiche concorrenti mentre si aspetta l'esecuzione.
 
-**Stato di verifica:** coda, lease, rifiuti e argomenti di isolamento sono verificati automaticamente. Docker non è disponibile nell'ambiente di sviluppo: l'esecuzione reale rimane da collaudare. Non usare questa release per eseguire progetti ostili prima di quella verifica.
+**Stato di verifica 0.6:** coda, lease, rifiuti e argomenti di isolamento verificati automaticamente. Anche il terminale è stato eseguito in Docker su GitHub Actions: utente 1000, rete limitata a loopback, sorgenti/root non scrivibili, output temporaneo senza write-back. Vedere `VALIDAZIONE-WEB.md`. Il worker sul proprio server deve comunque essere configurato e collaudato; questi test non costituiscono un audit contro codice ostile.
 
 Riferimento: [opzioni di esecuzione Docker](https://docs.docker.com/engine/containers/run/).

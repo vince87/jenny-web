@@ -1,10 +1,16 @@
 # Validazione Jenny Web 0.6.0
 
-2026-09-09, Windows / Node 24.14.0: suite aggiornata con test plugin, revoca e approvazioni, MCP HTTP JSON/SSE/paginazione/cleanup, isolamento terminale, protezioni URL e indicatore thinking. Due test POSIX sono esclusi su Windows e previsti nella CI Linux. Il conteggio definitivo e l'esito Docker saranno aggiunti dopo la verifica della revisione pubblicata.
+2026-09-09, Windows / Node 24.14.0: **54 test, 52 superati, 2 POSIX esclusi, zero fallimenti**. Test plugin, revoca e approvazioni, MCP HTTP JSON/SSE/paginazione/cleanup, isolamento terminale, protezioni URL e indicatore thinking.
 
-Prova esterna read-only: lettura di example.com riuscita; DuckDuckGo risponde HTTP 202 anti-bot. Ricerca Brave implementata ma non verificata con chiave reale. MCP testato contro server HTTP simulato, non un servizio terzo. DOM simulato, non collaudo browser. Nessun accesso al server di casa.
+Docker reale su GitHub Actions: build, Compose, health, utente non-root e persistenza dopo riavvio riusciti. Il worker esegue realmente un comando: verifica rete limitata a loopback, sorgenti e root read-only, scritture temporanee senza modifica dell'originale. [Run con smoke test Docker riuscito](https://github.com/vince87/jenny-web/actions/runs/34343068821). Quel run NON verifica la suite: i test erano esclusi dall'immagine. La CI corretta monta esplicitamente i test e ne richiede la presenza; l'esito completo è riportato separatamente sotto.
+
+Prova esterna read-only: lettura di example.com riuscita; DuckDuckGo risponde HTTP 202 anti-bot. Ricerca Brave implementata ma non verificata con chiave reale. MCP testato contro server HTTP simulato, non un servizio terzo. Pagina iniziale caricata in browser, nuovo pulsante visibile nell'albero accessibile; nessun collaudo interattivo completo. Gli altri test UI usano DOM simulato. Nessun accesso al server di casa.
 
 ## Validazione storica 0.5.0 (non attribuire questi risultati alla 0.6)
+
+La validazione definitiva della **0.6** è [il run 34343263897](https://github.com/vince87/jenny-web/actions/runs/34343263897), revisione `cfdac9a`: **54 test eseguiti, 54 superati, zero falliti, zero esclusi**, più smoke terminale Docker e Compose riusciti. Le modifiche successive a questa verifica riguardano solo la documentazione.
+
+---
 
 Esecuzione UTC: 2026-09-08T22:52:43.722968+00:00
 
