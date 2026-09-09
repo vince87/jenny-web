@@ -47,10 +47,13 @@ async function connectEvents() {
   eventsController = controller;
   try {
     const r = await fetch("/api/sessions/" + id + "/events", {
-      headers: token ? { Authorization: "Bearer " + token } : {},
       signal: controller.signal,
     });
     if (!r.ok) throw new Error("Event stream unavailable");
+    if (currentUser && r.headers.get("X-Jenny-User") !== currentUser.id) {
+      leaveAccount();
+      return;
+    }
     eventsHealthy = true;
     reconnectDelay = 2000;
     const reader = r.body.getReader(),

@@ -7,7 +7,19 @@ const { spawn, execFile } = require("node:child_process");
 const { promisify } = require("node:util");
 const { RECIPES } = require("../runner.cjs");
 const { randomUUID } = require("node:crypto");
+function jobRoot(root, job) {
+  if (job.owner === undefined) return root; // Standalone smoke tests; HTTP always sends owner.
+  if (
+    !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(
+      job.owner,
+    ) ||
+    typeof job.legacy !== "boolean"
+  )
+    throw Error("Invalid job owner");
+  return job.legacy ? root : path.join(root, ".users", job.owner);
+}
 function dockerArgs(root, job, name) {
+  root = jobRoot(root, job);
   if (
     !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/.test(job.workspace) ||
     (!Object.hasOwn(RECIPES, job.recipe) && job.recipe !== "terminal")
@@ -58,7 +70,7 @@ function dockerArgs(root, job, name) {
 }
 async function execute(root, job) {
   dockerArgs(root, job, "validate");
-  const target = path.join(root, job.workspace);
+  const target = path.join(jobRoot(root, job), job.workspace);
   let entries = 0,
     sourceBytes = 0;
   if (
@@ -121,10 +133,10 @@ async function execute(root, job) {
 }
 async function main() {
   const base = process.env.JENNY_URL,
-    token = process.env.JENNY_TOKEN,
+    token = process.env.JENNY_WORKER_TOKEN,
     root = await fs.realpath(process.env.WORKSPACES_DIR || "./workspaces");
   if (!base || !token)
-    throw Error("Set JENNY_URL, JENNY_TOKEN and WORKSPACES_DIR");
+    throw Error("Set JENNY_URL, JENNY_WORKER_TOKEN and WORKSPACES_DIR");
   const api = async (route, body) => {
     const r = await fetch(base + "/api" + route, {
       method: "POST",
@@ -141,6 +153,10 @@ async function main() {
   while (true) {
     const { job } = await api("/runner/claim", {});
     if (job) {
+      if (!job.owner)
+        throw Error(
+          "Server did not provide a job owner; update both server and worker.",
+        );
       let result;
       try {
         result = await execute(root, job);
@@ -149,6 +165,7 @@ async function main() {
       }
       await api("/runner/complete", {
         id: job.id,
+        owner: job.owner,
         lease: job.lease,
         ...result,
       });

@@ -1,7 +1,6 @@
 "use strict";
 
-// Phase 1 only: this module is not yet connected to the shared-workspace HTTP app.
-// Do not expose it as multi-user login until every resource is owner-scoped.
+// Local accounts. HTTP identity is always derived from an opaque session cookie.
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
@@ -85,6 +84,9 @@ class Accounts {
       password_hash TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','user')),
       disabled INTEGER NOT NULL DEFAULT 0 CHECK(disabled IN (0,1))
     ) STRICT;`);
+    this.db.exec(
+      "CREATE TABLE IF NOT EXISTS account_settings(key TEXT PRIMARY KEY,value TEXT NOT NULL) STRICT;",
+    );
     this.sessions = new Map();
     this.now = now;
     this.sessionMs = sessionMs;
@@ -116,6 +118,9 @@ class Accounts {
       if (this.db.prepare("SELECT COUNT(*) AS count FROM users").get().count)
         throw new Error("Administrator already initialized.");
       const user = this.insert(credentials, "admin");
+      this.db
+        .prepare("INSERT INTO account_settings VALUES('legacy-owner',?)")
+        .run(user.id);
       this.db.exec("COMMIT");
       return user;
     } catch (error) {
@@ -150,7 +155,37 @@ class Accounts {
     this.admin(adminToken);
     const credentials = await this.credentials(name, secret);
     this.admin(adminToken); // Session may have expired while hashing.
+    if (this.allUsers().length >= 20)
+      throw new Error("Maximum 20 local users.");
     return this.insert(credentials, "user");
+  }
+
+  allUsers() {
+    return this.db
+      .prepare("SELECT * FROM users ORDER BY rowid")
+      .all()
+      .map(publicUser);
+  }
+  legacyOwner() {
+    return this.db
+      .prepare("SELECT value FROM account_settings WHERE key='legacy-owner'")
+      .get()?.value;
+  }
+  getUser(id) {
+    return publicUser(
+      this.db.prepare("SELECT * FROM users WHERE id=?").get(id),
+    );
+  }
+  async resetPasswordLocal(name, secret) {
+    const row = this.db
+      .prepare("SELECT * FROM users WHERE username=?")
+      .get(username(name));
+    if (!row) throw new Error("User not found.");
+    const credentials = await this.credentials(name, secret);
+    this.db
+      .prepare("UPDATE users SET salt=?,password_hash=? WHERE id=?")
+      .run(credentials.salt, credentials.hash, row.id);
+    this.revokeUser(row.id);
   }
 
   async login(name, secret) {

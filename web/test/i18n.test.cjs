@@ -31,10 +31,11 @@ test("Il runtime generato coincide con il catalogo canonico", () => {
   );
 });
 test("Markup: tutte le chiavi annotate e i riferimenti dinamici hanno traduzione", () => {
-  const html = fs.readFileSync(
-    path.join(__dirname, "../public/index.html"),
-    "utf8",
-  );
+  const html = ["index.html", "login.html"]
+    .map((file) =>
+      fs.readFileSync(path.join(__dirname, "../public", file), "utf8"),
+    )
+    .join("\n");
   for (const match of html.matchAll(/data-i18n(?:-[a-z-]+)?="([^"]+)"/g)) {
     const key = match[1]
       .replace(/&amp;/g, "&")

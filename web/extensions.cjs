@@ -69,7 +69,8 @@ const SCHEMAS = [
   ],
 ];
 class Extensions {
-  constructor(dataDir, runner, env = process.env) {
+  constructor(dataDir, runner, env = process.env, { privileged = true } = {}) {
+    this.privileged = privileged;
     this.search = new (require("./search.cjs").SearchConfig)(env);
     this.file = path.join(dataDir, "extensions.json");
     this.runner = runner;
@@ -87,7 +88,7 @@ class Extensions {
   }
   list() {
     return {
-      catalog: CATALOG,
+      catalog: CATALOG.filter((x) => this.privileged || x.id !== "terminal"),
       search: this.search.view(),
       installed: this.items.map(({ token, ...item }) => ({
         ...item,
@@ -96,6 +97,11 @@ class Extensions {
     };
   }
   install(body) {
+    if (
+      !this.privileged &&
+      (body.kind === "terminal" || body.privateNetwork === true)
+    )
+      throw Error("Solo amministratore.");
     if (body.confirmed !== true)
       throw Error("Confirm plugin permissions before installing.");
     if (!["web", "terminal", "mcp"].includes(body.kind))
@@ -157,6 +163,7 @@ class Extensions {
     return this.list();
   }
   available(name) {
+    if (!this.privileged && name.startsWith("terminal_")) return false;
     return name.startsWith("web_")
       ? this.items.some((i) => i.id === "web" && i.enabled)
       : name.startsWith("terminal_")
@@ -181,6 +188,12 @@ class Extensions {
     );
   }
   validate(name, args) {
+    if (
+      !this.privileged &&
+      name.startsWith("mcp_") &&
+      this.items.find((x) => x.id === args?.plugin)?.privateNetwork
+    )
+      throw Error("Solo amministratore.");
     const schema = SCHEMAS.find((s) => s[0] === name);
     if (!schema || !this.available(name))
       throw Error("Plugin unavailable or disabled.");

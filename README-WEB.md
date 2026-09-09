@@ -1,10 +1,10 @@
-# Jenny Web 0.6.2 — Web, plugin e MCP IT/EN
+# Jenny Web 0.7.0 — Login locale, Web, plugin e MCP IT/EN
 
 ## Pulizia e avvio fase login (0.6.2)
 
 Rimossi GUI Electron, installer Windows/macOS/Linux, sidecar Python, dipendenze e test desktop non utilizzati. Sono mantenuti solo i 15 servizi condivisi raggiungibili dalle dipendenze della webapp. Codice JavaScript formattato uniformemente, senza riscrittura in Python. La versione completa resta recuperabile dal tag `v0.6.1`.
 
-Avviata la fase login con un modulo account indipendente e testato: `LOGIN-WEB.md`. **La pagina login e l'isolamento multiutente non sono ancora attivati: l'accesso corrente resta con JENNY_TOKEN.** Nessuna migrazione o modifica dei dati dell'utente viene eseguita da questa release.
+**Dalla 0.7.0 login e multiutente sono attivi. Prima di aggiornare, fare backup e creare il primo amministratore dal terminale: [LOGIN-WEB.md](LOGIN-WEB.md).** I dati precedenti vengono assegnati esplicitamente al primo admin senza spostarli; i nuovi account hanno archivi separati. Nessun aggiornamento automatico sul server dell'utente.
 
 Webapp di coding per Linux/Docker, derivata da [Jenny di SaltyPretz3l](https://github.com/SaltyPretz3l/jenny). Chat, workspace, editor e agente con approvazioni. Il runtime non usa Electron, VNC, Python o dipendenze npm esterne.
 
@@ -48,7 +48,7 @@ La chat mostra subito l'attesa del modello, poi thinking (se trasmesso da Ollama
 
 Il catalogo non è il marketplace desktop: i pacchetti/plugin Electron originali e il controllo del desktop non sono ancora portati. I tool filesystem originali già integrati restano disponibili. Questa release non realizza ancora la parità completa con Jenny desktop.
 
-Configurazione e credenziali dei plugin sono in `/data/extensions.json`: proteggere volume e backup, che possono contenerle in chiaro. Applicazione per un solo utente fidato; il token d'accesso rimane necessario. Dettagli e stato delle prove in `RELEASE-WEB-0.6.0.md` e `VALIDAZIONE-WEB.md`.
+Plugin e credenziali sono nell'archivio personale di ciascun account: proteggere volumi e backup, che possono contenerle in chiaro. Terminale e MCP LAN sono riservati all'admin. Dettagli in `LOGIN-WEB.md` e `VALIDAZIONE-WEB.md`.
 
 ## Avvio rapido: Ollama che hai già
 
@@ -58,7 +58,7 @@ Dalla cartella estratta:
 ./start-web.sh
 ```
 
-Lo script controlla Docker e Compose, crea `.env` con un token casuale se non esiste e avvia la build. Non sovrascrive una configurazione esistente, non scarica modelli e non cambia il tuo Ollama.
+Lo script controlla Docker e Compose, copia `.env.example` se non esiste un `.env` e avvia la build. Non sovrascrive una configurazione esistente, non scarica modelli e non cambia il tuo Ollama.
 
 La configurazione iniziale cerca Ollama sul server Linux attraverso `http://host.docker.internal:11434`. Ollama deve ascoltare su un'interfaccia raggiungibile dai container: se è limitato a `127.0.0.1` dell'host, il solo alias Docker non basta. Se Ollama è su un altro host usa il suo indirizzo LAN; se è un container sulla stessa rete usa nome servizio e porta interna.
 
@@ -76,9 +76,9 @@ Poi:
 docker compose up -d --build
 ```
 
-Apri `http://IP_DEL_SERVER:3000`. Nella schermata **Connessione** incolla il valore `JENNY_TOKEN` presente in `.env`, scegli un modello già installato e inizia una chat. Il bind iniziale `127.0.0.1` consente invece solo l'accesso locale al server.
+Apri `http://IP_DEL_SERVER:3000`. Accedi con nome utente e password dopo aver creato l'admin seguendo `LOGIN-WEB.md`, scegli un modello già installato e inizia una chat. Il bind iniziale `127.0.0.1` consente invece solo l'accesso locale al server.
 
-Il token Jenny resta nel session storage della scheda. L'eventuale chiave LLM resta sul server. Non pubblicare `.env` nel repository. Per reti non fidate usa HTTPS dietro reverse proxy; il servizio è progettato per un solo utente fidato.
+L'accesso usa un cookie di sessione; l'eventuale chiave LLM resta sul server. Non pubblicare `.env`. HTTP è ammesso solo in LAN fidata; HTTPS richiede `JENNY_COOKIE_SECURE=true`.
 
 ## Novità della 0.5
 
@@ -155,7 +155,7 @@ Il budget usa una **stima in byte**, non il tokenizer del modello. Riserva spazi
 Questa opzione è separata dal collegamento al tuo Ollama esistente:
 
 ```sh
-# Prepara prima .env con token, come nell'avvio rapido.
+# Prepara prima .env e l'account admin, come in LOGIN-WEB.md.
 docker compose -f compose.yaml -f compose.ollama.yaml up -d --build
 # Sostituisci NOME_MODELLO con un modello che vuoi installare:
 docker compose -f compose.yaml -f compose.ollama.yaml exec ollama ollama pull NOME_MODELLO
@@ -199,7 +199,7 @@ Esempio progetto: `/docker/stacks/jenny-web/workspaces/mio-progetto`. I nomi wor
 
 Fai backup di entrambi i volumi. `docker compose down` li mantiene; `down -v` li elimina. Per aggiornare dalla 0.1 conserva `.env` e gli stessi nomi progetto/volumi; scegli esplicitamente `LLM_PROVIDER=openai` se il vecchio endpoint era LocalAI.
 
-Le letture dell'agente sono automatiche nel workspace della conversazione. Ogni `write_file`, `edit_file` o `write_files` aspetta approvazione, con revisione del file verificata al momento del salvataggio. Il pulsante manuale **Salva** applica direttamente la modifica richiesta nell'editor. Nessun comando shell è disponibile al modello.
+Le letture dell'agente sono automatiche nel workspace della conversazione. Ogni `write_file`, `edit_file` o `write_files` aspetta approvazione, con revisione del file verificata al momento del salvataggio. Il pulsante manuale **Salva** applica direttamente la modifica richiesta nell'editor. Con il plugin Terminale abilitato dall'admin, i comandi shell richiedono approvazione e worker Docker separato.
 
 ## Scorciatoie
 
@@ -220,17 +220,17 @@ node web/server.cjs
 node --test web/test/*.test.cjs
 ```
 
-L'avvio senza Docker usa `127.0.0.1:3000`, `./web-data`, `./workspaces` e Ollama locale sulla porta 11434. Per caricare `.env`: `node --env-file=.env web/server.cjs`, adattando l'endpoint a `127.0.0.1` anziché al nome Docker. Il bind standalone è `HOST`; un bind di rete richiede il token.
+L'avvio senza Docker usa `127.0.0.1:3000`, `./web-data`, `./workspaces` e Ollama locale sulla porta 11434. Per caricare `.env`: `node --env-file=.env web/server.cjs`, adattando l'endpoint a `127.0.0.1` anziché al nome Docker. Il bind standalone è `HOST`; il login è obbligatorio anche in locale. Creare l'account dal CLI descritto in LOGIN-WEB.md.
 
 Dalla 0.6.2 gli script npm nella radice avviano e verificano esclusivamente la webapp (`npm start`, `npm test`). Prettier è la sola dipendenza di sviluppo: `npm ci` e `npm run format`. Non è una dipendenza runtime.
 
 ## Verifica e limiti
 
-I risultati aggiornati della suite sono riportati in `VALIDAZIONE-WEB.md`. Sono verificati contesto, filesystem, streaming, approvazioni, rifiuti, conflitti, stop, cronologia, ricerca, MCP e la prima base account separata dal runtime corrente.
+I risultati aggiornati della suite sono riportati in `VALIDAZIONE-WEB.md`. Sono verificati contesto, filesystem, streaming, approvazioni, rifiuti, conflitti, stop, cronologia, ricerca, MCP e isolamento HTTP multiutente con login attivo.
 
 Docker e worker sono verificati tramite CI, con evidenza per revisione in `VALIDAZIONE-WEB.md`. Restano da verificare prestazioni/qualità di un modello reale e flussi browser completi sui dispositivi. Il runtime di test e l'immagine usano Node 24.
 
-Limiti: un utente fidato e un processo Node per i dati; editor leggero; file di testo fino a 256 KiB; ricerca limitata a 400 file/100 cartelle/100 risultati GUI (40 per il tool)/3 secondi, massimo 5 corrispondenze di contenuto per file; 12 passaggi LLM e 8 tool per risposta. La ricerca ignora le directory di dipendenze/build più comuni e può segnalare risultati incompleti. Non è un IDE completo, un ambiente multiutente o una sandbox contro processi ostili sull'host. Niente terminale al modello, Git push/PR, MCP o download modelli dalla GUI. L’esecuzione di test è opzionale e manuale tramite il worker isolato.
+Limiti: massimo 20 account locali fidati e un processo Node per i dati; editor leggero; file di testo fino a 256 KiB; ricerca limitata a 400 file/100 cartelle/100 risultati GUI (40 per il tool)/3 secondi, massimo 5 corrispondenze di contenuto per file; 12 passaggi LLM e 8 tool per risposta. La ricerca ignora le directory di dipendenze/build più comuni e può segnalare risultati incompleti. Non è un IDE completo o una sandbox contro processi ostili sull'host. Mancano Git push/PR, download modelli dalla GUI, terminale PTY, MCP stdio/OAuth e parità desktop. Terminale batch e test richiedono worker opzionale e approvazione amministrativa.
 
 Se il server si arresta durante una scrittura, controlla il file prima di riprovare. Le proposte in attesa restano pendenti; i turni interrotti non vengono rieseguiti automaticamente. Durante la prima migrazione i JSON illeggibili vengono conservati e segnalati nei log; non vengono importati. Dopo la migrazione le chat correnti risiedono in SQLite.
 

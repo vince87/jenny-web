@@ -2,6 +2,8 @@
 
 La 0.5 usa Node 24 e SQLite (`web-data/jenny.sqlite`, `/data/jenny.sqlite` in Docker). Le chat JSON delle versioni precedenti vengono importate una sola volta e lasciate intatte. Dopo la migrazione SQLite è la fonte corrente: modificare i vecchi JSON non aggiorna le chat.
 
+Dalla 0.7 il backup include anche `accounts.sqlite` e le directory nascoste `.users` di tutti gli account. Contiene hash password, chat e possibili credenziali plugin in chiaro: proteggerlo. Il ripristino multiutente è verificato con login e file; l'export browser contiene soltanto le chat dell'utente autenticato. Per tornare alla 0.6 usare una copia del backup precedente all'upgrade: la vecchia versione non comprende i nuovi account.
+
 ## Backup completo, standalone
 
 Fermare Jenny **e ogni altro programma che scrive nei workspace**. Il backup legge dati, storia file e workspace, inclusi binari, Git e cartelle vuote. Non segue symlink: se ne trova uno, si ferma esplicitamente. Il file può contenere materiale privato presente nei workspace; conservarlo come un backup personale.

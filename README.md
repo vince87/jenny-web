@@ -6,7 +6,8 @@ Assistente locale di coding nel browser, con Ollama, workspace, approvazioni, ri
 - [Backup e ripristino](BACKUP-WEB.md)
 - [Worker terminale](RUNNER-WEB.md)
 - [Roadmap](ROADMAP.md) e [verifiche effettive](VALIDAZIONE-WEB.md)
-- [Pulizia del desktop e prima fase login](RELEASE-WEB-0.6.2.md)
+- [Login e gestione utenti](LOGIN-WEB.md)
+- [Novità della 0.7.0](RELEASE-WEB-0.7.0.md)
 
 ## Sviluppo
 

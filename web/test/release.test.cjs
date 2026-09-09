@@ -177,6 +177,7 @@ test("Ollama nativo: opzioni, tools, thinking, metriche e round trip approvazion
   });
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "jenny-native-"));
   const app = await createApp({
+    legacyAuth: true,
     baseURL: baseURL + "/v1",
     provider: "ollama",
     ollama: { context: 8192, predict: 2048, think: "false" },

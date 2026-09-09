@@ -3,7 +3,24 @@ const locale = JennyI18n.create(localStorage.getItem("jenny-language") || "it");
 const t = (key) => locale.t(key);
 const $ = (id) => document.getElementById(id);
 const fileGate = new JennyState.RequestGate();
-let token = sessionStorage.getItem("jenny-token") || "";
+let currentUser = null,
+  authCSRF = "";
+function leaveAccount() {
+  eventsController?.abort();
+  window.location.replace("/login");
+}
+function clearPersonalStorage() {
+  for (const storage of [localStorage, sessionStorage])
+    for (const key of Object.keys(storage))
+      if (
+        key.startsWith("jenny-") &&
+        !["jenny-language", "jenny-theme"].includes(key)
+      )
+        storage.removeItem(key);
+}
+window.addEventListener("storage", (event) => {
+  if (event.key === "jenny-account-change") leaveAccount();
+});
 let workspace = localStorage.getItem("jenny-workspace") || "",
   session = null,
   directory = "",
@@ -38,15 +55,19 @@ async function api(route, body) {
     method: body === undefined ? "GET" : "POST",
     headers: {
       "Accept-Language": locale.language,
-      ...(token ? { Authorization: "Bearer " + token } : {}),
+      ...(body === undefined ? {} : { "X-Jenny-CSRF": authCSRF }),
       ...(body === undefined ? {} : { "Content-Type": "application/json" }),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const data = await response.json();
+  const owner = response.headers.get("X-Jenny-User");
+  if (currentUser && owner && owner !== currentUser.id) {
+    leaveAccount();
+    throw Error("Accesso richiesto");
+  }
   if (!response.ok) {
-    if (response.status === 401 && !$("settings").open)
-      $("settings").showModal();
+    if (response.status === 401) leaveAccount();
     throw new Error(data.error || t("Errore del server."));
   }
   return data;
@@ -283,6 +304,25 @@ async function initialize() {
   eventsController?.abort();
   eventsId = null;
   eventsHealthy = false;
+  const identity = await api("/auth/me");
+  if (currentUser && identity.user.id !== currentUser.id) {
+    leaveAccount();
+    return;
+  }
+  if (localStorage.getItem("jenny-user") !== identity.user.id) {
+    clearPersonalStorage();
+    localStorage.setItem("jenny-user", identity.user.id);
+    workspace = "";
+  }
+  currentUser = identity.user;
+  authCSRF = identity.csrf;
+  $("accountName").textContent = currentUser.username;
+  $("adminUsers").hidden = currentUser.role !== "admin";
+  document.querySelector('[data-panel="runnerPanel"]').hidden =
+    currentUser.role !== "admin";
+  $("terminalForm").hidden = currentUser.role !== "admin";
+  $("terminalRefresh").hidden = currentUser.role !== "admin";
+  $("mcpPrivate").closest("label").hidden = currentUser.role !== "admin";
   const config = await api("/config");
   lastConfig = config;
   $("connection").textContent = t("Server connesso");
@@ -333,14 +373,11 @@ async function initialize() {
     });
 }
 $("settingsButton").onclick = () => {
-  $("token").value = token;
   $("settings").showModal();
 };
 $("closeSettings").onclick = () => $("settings").close();
 $("settingsForm").onsubmit = act(async (e) => {
   e.preventDefault();
-  token = $("token").value.trim();
-  sessionStorage.setItem("jenny-token", token);
   $("settings").close();
   await initialize();
 });

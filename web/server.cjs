@@ -16,19 +16,7 @@ function equal(a, b) {
     y = Buffer.from(b);
   return x.length === y.length && timingSafeEqual(x, y);
 }
-async function createApp(options = {}) {
-  const dataDir = path.resolve(
-    options.dataDir ||
-      process.env.DATA_DIR ||
-      path.join(__dirname, "../web-data"),
-  );
-  const root =
-    options.workspaceRoot ||
-    process.env.WORKSPACES_DIR ||
-    path.join(__dirname, "../workspaces");
-  const token = options.token ?? process.env.JENNY_TOKEN ?? "";
-  if (token && token.length < 16)
-    throw new Error("JENNY_TOKEN deve contenere almeno 16 caratteri.");
+async function createRuntime(options, dataDir, root, user) {
   const workspaces = new Workspaces(root, path.join(dataDir, "file-history"));
   await workspaces.init();
   if (!(await workspaces.list()).length) await workspaces.create("principale");
@@ -56,13 +44,59 @@ async function createApp(options = {}) {
   const extensions = new (require("./extensions.cjs").Extensions)(
     dataDir,
     runner,
+    process.env,
+    { privileged: !user || user.role === "admin" },
   );
   agent.extensions = extensions;
+  return { agent, workspaces, runner, extensions, dataDir };
+}
+async function createApp(options = {}) {
+  const baseDataDir = path.resolve(
+    options.dataDir ||
+      process.env.DATA_DIR ||
+      path.join(__dirname, "../web-data"),
+  );
+  const root = path.resolve(
+    options.workspaceRoot ||
+      process.env.WORKSPACES_DIR ||
+      path.join(__dirname, "../workspaces"),
+  );
+  // Explicit library-only adapter for regression tests. Production has no token-login switch.
+  const legacy = options.legacyAuth === true;
+  const token = legacy ? options.token || "" : "";
+  const accounts = legacy
+    ? null
+    : new (require("./auth/accounts.cjs").Accounts)(baseDataDir);
+  const auth = legacy
+    ? null
+    : new (require("./auth/http.cjs").AuthHTTP)(accounts, {
+        secure: process.env.JENNY_COOKIE_SECURE === "true",
+      });
+  const runtimes = legacy
+    ? null
+    : new (require("./auth/runtimes.cjs").UserRuntimes)(
+        accounts,
+        baseDataDir,
+        root,
+        (data, workspace, user) =>
+          createRuntime(options, data, workspace, user),
+      );
+  const legacyContext = legacy
+    ? await createRuntime(options, baseDataDir, root)
+    : null;
+  if (runtimes) await runtimes.initialize();
+  if (auth) auth.onDisabled = (id) => runtimes.suspend(id);
+  const workerToken =
+    options.workerToken ?? process.env.JENNY_WORKER_TOKEN ?? "";
+  if (workerToken && workerToken.length < 24)
+    throw Error("JENNY_WORKER_TOKEN requires at least 24 characters.");
   const publicDir = path.join(__dirname, "public");
   const allowedOrigins = new Set(
     (process.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean),
   );
+  let inFlight = 0;
   const server = http.createServer(async (req, res) => {
+    inFlight++;
     const language = /^en(?:-|,|;|$)/i.test(
       req.headers["accept-language"] || "",
     )
@@ -92,7 +126,10 @@ async function createApp(options = {}) {
         if (req.method !== "GET")
           return json({ error: "Metodo non consentito." }, 405);
         const file = {
-          "/": "index.html",
+          "/": legacy || auth.session(req).user ? "index.html" : "login.html",
+          "/login": "login.html",
+          "/login.js": "login.js",
+          "/auth-ui.js": "auth-ui.js",
           "/app.js": "app.js",
           "/activity-ui.js": "activity-ui.js",
           "/extensions-ui.js": "extensions-ui.js",
@@ -118,6 +155,7 @@ async function createApp(options = {}) {
         return res.end(content);
       }
       if (
+        legacy &&
         !token &&
         !/^(localhost|127\.0\.0\.1|\[::1\])(?::[0-9]+)?$/.test(
           req.headers.host || "",
@@ -158,6 +196,39 @@ async function createApp(options = {}) {
           throw new Error("Richiesta non valida.");
       }
       const method = req.method;
+      if (!legacy && route.startsWith("/api/auth/"))
+        return await auth.handle(route, req, res, body, json);
+      if (
+        !legacy &&
+        ["/api/runner/claim", "/api/runner/complete"].includes(route)
+      ) {
+        if (
+          method !== "POST" ||
+          !workerToken ||
+          !equal(req.headers.authorization || "", "Bearer " + workerToken)
+        )
+          return json({ error: "Worker non autorizzato." }, 403);
+        return route.endsWith("/claim")
+          ? json({ job: await runtimes.claim() })
+          : json(await runtimes.complete(body));
+      }
+      const identity = legacy
+        ? { user: { id: "legacy", role: "admin" }, token: "" }
+        : auth.session(req);
+      if (!identity.user) return json({ error: "Accesso richiesto" }, 401);
+      if (!legacy && method === "POST" && !auth.verify(req, identity.token))
+        return json({ error: "Richiesta non autorizzata." }, 403);
+      res.setHeader("X-Jenny-User", identity.user.id);
+      const { agent, workspaces, runner, extensions, dataDir } =
+        legacyContext || (await runtimes.get(identity.user));
+      if (!legacy && !accounts.currentUser(identity.token))
+        return json({ error: "Accesso richiesto" }, 401);
+      if (
+        !legacy &&
+        identity.user.role !== "admin" &&
+        route.startsWith("/api/runner")
+      )
+        return json({ error: "Solo amministratore." }, 403);
       if (route === "/api/config" && method === "GET")
         return json({
           provider: agent.provider.kind,
@@ -165,6 +236,7 @@ async function createApp(options = {}) {
           model: agent.model,
           baseURL: agent.baseURL,
           version: require("./package.json").version,
+          user: identity.user,
           profiles: PROFILES,
           streaming: agent.provider.streaming,
           tools: [
@@ -331,6 +403,8 @@ async function createApp(options = {}) {
             "X-Accel-Buffering": "no",
           });
           const send = (state) => {
+            if (!legacy && !accounts.currentUser(identity.token))
+              return res.end();
             if (res.writableLength > 1024 * 1024) return res.destroy();
             res.write(
               "event: " +
@@ -343,7 +417,10 @@ async function createApp(options = {}) {
           send(agent.view(s));
           const unsubscribe = agent.subscribe(s.id, send);
           const heartbeat = setInterval(
-            () => res.write(": heartbeat\n\n"),
+            () =>
+              !legacy && !accounts.currentUser(identity.token)
+                ? res.end()
+                : res.write(": heartbeat\n\n"),
             15000,
           );
           heartbeat.unref();
@@ -374,6 +451,15 @@ async function createApp(options = {}) {
             agent.save(s);
           } else if (action === "message") {
             const input = await prepareTurn(agent, s, body);
+            if (!legacy && !accounts.currentUser(identity.token))
+              return json({ error: "Accesso richiesto" }, 401);
+            if (
+              !legacy &&
+              [...agent.sessions.values()].filter((x) =>
+                ["running", "waiting", "approving"].includes(x.status),
+              ).length >= 2
+            )
+              throw Error("Massimo due turni attivi per utente.");
             agent.send(
               s,
               input.content,
@@ -402,24 +488,28 @@ async function createApp(options = {}) {
           400,
         );
       else res.end();
+    } finally {
+      inFlight--;
     }
   });
   server.requestTimeout = 30000;
   server.headersTimeout = 15000;
-  return { server, agent, workspaces };
+  let closing;
+  const close = () =>
+    (closing ??= (async () => {
+      server.closeAllConnections();
+      await new Promise((resolve) => server.close(resolve));
+      while (inFlight) await new Promise((resolve) => setTimeout(resolve, 10));
+      if (runtimes) {
+        await runtimes.close();
+        accounts.close();
+      } else legacyContext.agent.store.close();
+    })());
+  return { server, ...(legacyContext || {}), accounts, runtimes, close };
 }
 if (require.main === module) {
   const host = process.env.HOST || "127.0.0.1";
   const port = Number(process.env.PORT || 3000);
-  if (
-    !["127.0.0.1", "localhost", "::1"].includes(host) &&
-    !process.env.JENNY_TOKEN
-  ) {
-    console.error(
-      "JENNY_TOKEN obbligatorio quando HOST espone il server in rete.",
-    );
-    process.exit(1);
-  }
   let release;
   require("./backup.cjs")
     .acquire(
@@ -429,7 +519,7 @@ if (require.main === module) {
       release = unlock;
       return createApp();
     })
-    .then(({ server, agent }) => {
+    .then(({ server, close }) => {
       server.listen(port, host, () =>
         console.log(`Jenny Web disponibile su http://${host}:${port}`),
       );
@@ -437,10 +527,8 @@ if (require.main === module) {
       const shutdown = () => {
         if (shuttingDown) return;
         shuttingDown = true;
-        for (const c of agent.controllers.values()) c.abort();
-        server.close();
         setTimeout(async () => {
-          agent.store.close();
+          await close();
           await release();
           process.exit(0);
         }, 3000);

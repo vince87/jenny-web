@@ -1,4 +1,12 @@
-# Validazione Jenny Web 0.6.2
+# Validazione Jenny Web 0.7.0
+
+Suite locale Node 24: **65 test, 63 superati, 2 POSIX esclusi su Windows, zero fallimenti**. Copertura aggiunta: primo avvio chiuso, cookie/CSRF/origine, tentativi login, isolamento A/B di file/chat/export/plugin/worker, revoca SSE, password/logout/disabilitazione/riavvio, recupero password e backup/ripristino completo multiutente. Una precedente esecuzione ha incontrato una porta effimera vietata da Fetch: corretto l'allocatore del fixture di integrazione; suite rieseguita.
+
+Browser desktop con dati fittizi locali: login admin IT, lista utenti, logout; login utente normale EN, assenza gestione utenti, logout. Layout login osservato. Non verificati cambio password/creazione utenti tramite interazione browser, mobile, più schede simultanee o flusso completo agente su modello reale: queste funzioni hanno controlli HTTP/statici dove indicato.
+
+CI Docker per questa revisione in attesa. Aggiunto smoke Compose con inizializzazione offline di account fittizio, login/accesso workspace/logout prima e dopo riavvio. Non è stato aggiornato il server domestico; nessun modello reale eseguito in questo collaudo.
+
+## Evidenza storica 0.6.2
 
 Pulizia e formattazione: suite locale su Node 24 con 60 test, 58 superati e 2 POSIX esclusi su Windows; zero fallimenti. Inclusi due test del nuovo componente account con hash reali e database temporanei. Login non collegato alle route: questi test non verificano ancora isolamento HTTP multiutente o GUI login.
 

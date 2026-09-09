@@ -87,4 +87,7 @@ test("Accounts foundation: password change revokes all sessions; duplicate ident
   assert.equal(accounts.currentUser(b.token), null);
   await assert.rejects(accounts.login("owner", "old-password"));
   assert.ok((await accounts.login("owner", "new-password")).user);
+  await accounts.resetPasswordLocal("owner", "recovered-password");
+  await assert.rejects(accounts.login("owner", "new-password"));
+  assert.ok((await accounts.login("owner", "recovered-password")).user);
 });

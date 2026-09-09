@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Jenny Web — Login</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/i18n.js" defer></script>
+    <script src="/login.js" defer></script>
+  </head>
+  <body class="login-page">
+    <main class="login-card">
+      <h1>Jenny Web</h1>
+      <p data-i18n="Accedi al tuo spazio personale.">
+        Accedi al tuo spazio personale.
+      </p>
+      <label for="loginLanguage" data-i18n="Lingua">Lingua</label
+      ><select id="loginLanguage">
+        <option value="it">Italiano</option>
+        <option value="en">English</option>
+      </select>
+      <form id="loginForm">
+        <label for="username" data-i18n="Nome utente">Nome utente</label
+        ><input
+          id="username"
+          name="username"
+          autocomplete="username"
+          required
+          maxlength="32"
+          autofocus
+        />
+        <label for="password">Password</label
+        ><input
+          type="password"
+          id="password"
+          name="password"
+          autocomplete="current-password"
+          required
+          maxlength="1024"
+        />
+        <button id="loginSubmit" data-i18n="Accedi">Accedi</button>
+      </form>
+      <p id="loginError" role="alert"></p>
+      <p
+        id="setupHint"
+        hidden
+        data-i18n="Primo avvio: crea l’amministratore dal terminale del server seguendo LOGIN-WEB.md."
+      >
+        Primo avvio: crea l’amministratore dal terminale del server seguendo
+        LOGIN-WEB.md.
+      </p>
+      <p
+        class="hint"
+        data-i18n="Uso locale. Su HTTP utilizza solo una rete fidata."
+      >
+        Uso locale. Su HTTP utilizza solo una rete fidata.
+      </p>
+    </main>
+  </body>
+</html>

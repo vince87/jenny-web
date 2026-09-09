@@ -7,12 +7,16 @@ const path = require("node:path");
 const http = require("node:http");
 const { createApp } = require("../server.cjs");
 const TOKEN = "test-token-for-jenny-web-12345";
-const listen = (server) =>
-  new Promise((resolve) =>
-    server.listen(0, "127.0.0.1", () =>
-      resolve(`http://127.0.0.1:${server.address().port}`),
-    ),
-  );
+const listen = async (server) => {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const port = server.address().port;
+    // Some hosts allocate ephemeral ports on Fetch's forbidden-port list.
+    if (port > 10080) return `http://127.0.0.1:${port}`;
+    await new Promise((resolve) => server.close(resolve));
+  }
+  throw Error("Unable to allocate a Fetch-compatible test port.");
+};
 const close = (server) =>
   new Promise((resolve) => {
     server.closeAllConnections();
@@ -37,6 +41,7 @@ async function setup(t, responder) {
   });
   const llmURL = await listen(llm);
   const options = {
+    legacyAuth: true,
     provider: "openai",
     dataDir: path.join(dir, "data"),
     workspaceRoot: path.join(dir, "workspaces"),
@@ -201,7 +206,7 @@ test("HTTP: pagina reale, asset, health, autenticazione e origini", async (t) =>
     415,
   );
   assert.deepEqual((await x.api("/api/models")).body.models, ["local-test"]);
-  assert.equal((await x.api("/api/config")).body.version, "0.6.2");
+  assert.equal((await x.api("/api/config")).body.version, "0.7.0");
 });
 test("File: creazione, lettura, modifica, conflitto e separazione workspace", async (t) => {
   const { api } = await setup(t, async () => finish);

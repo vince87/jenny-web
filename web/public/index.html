@@ -18,6 +18,7 @@
     <script src="/app.js" defer></script>
     <script src="/activity-ui.js" defer></script>
     <script src="/extensions-ui.js" defer></script>
+    <script src="/auth-ui.js" defer></script>
   </head>
   <body data-view="chat">
     <a class="skip-link" href="#prompt" data-i18n="Vai al messaggio"
@@ -28,7 +29,7 @@
         ><span class="brand-mark">j.</span>jenny<span class="brand-web"
           >web</span
         ></a
-      ><span class="release">PREVIEW / 0.5</span><span class="spacer"></span
+      ><span class="release">PREVIEW / 0.7</span><span class="spacer"></span
       ><label class="sr-only" for="language" data-i18n="Lingua">Lingua</label
       ><select id="language" aria-label="Lingua" data-i18n-aria-label="Lingua">
         <option value="it">Italiano</option>
@@ -49,6 +50,7 @@
       ><button id="settingsButton" class="quiet" data-i18n="Connessione">
         Connessione
       </button>
+      <button id="accountButton" data-i18n="Account">Account</button>
     </header>
     <div id="notice" role="status" hidden></div>
     <div
@@ -529,6 +531,66 @@
       <div id="terminalOutput"></div>
       <pre id="mcpOutput"></pre>
     </dialog>
+    <dialog id="accountDialog">
+      <h2 data-i18n="Account">Account</h2>
+      <div class="account-bar">
+        <span id="accountName"></span>
+        <button id="logoutButton" data-i18n="Esci">Esci</button>
+      </div>
+      <button id="accountClose" data-i18n="Chiudi">Chiudi</button>
+      <form id="passwordForm">
+        <h3 data-i18n="Cambia password">Cambia password</h3>
+        <label for="currentPassword" data-i18n="Password attuale"
+          >Password attuale</label
+        ><input
+          id="currentPassword"
+          type="password"
+          autocomplete="current-password"
+          required
+        />
+        <label for="newPassword" data-i18n="Nuova password"
+          >Nuova password</label
+        ><input
+          id="newPassword"
+          type="password"
+          autocomplete="new-password"
+          minlength="8"
+          required
+        />
+        <label for="repeatPassword" data-i18n="Ripeti password"
+          >Ripeti password</label
+        ><input
+          id="repeatPassword"
+          type="password"
+          autocomplete="new-password"
+          minlength="8"
+          required
+        /><button data-i18n="Salva">Salva</button>
+      </form>
+      <section id="adminUsers" hidden>
+        <h3 data-i18n="Utenti">Utenti</h3>
+        <button id="usersRefresh" data-i18n="Aggiorna">Aggiorna</button>
+        <div id="usersList"></div>
+        <form id="createUserForm">
+          <label for="newUsername" data-i18n="Nome utente">Nome utente</label
+          ><input
+            id="newUsername"
+            autocomplete="off"
+            required
+            minlength="3"
+            maxlength="32"
+          /><label for="userPassword" data-i18n="Password iniziale"
+            >Password iniziale</label
+          ><input
+            id="userPassword"
+            type="password"
+            autocomplete="new-password"
+            required
+            minlength="8"
+          /><button data-i18n="Crea utente">Crea utente</button>
+        </form>
+      </section>
+    </dialog>
     <dialog id="settings">
       <form id="settingsForm">
         <div class="dialog-eyebrow">JENNY WEB</div>
@@ -540,22 +602,6 @@
         </h2>
         <p id="endpoint" data-i18n="Endpoint configurato sul server">
           Endpoint configurato sul server
-        </p>
-        <label for="token" data-i18n="Token di accesso a Jenny"
-          >Token di accesso a Jenny</label
-        ><input
-          type="password"
-          id="token"
-          autocomplete="off"
-          placeholder="Incolla JENNY_TOKEN"
-          data-i18n-placeholder="Incolla JENNY_TOKEN"
-        />
-        <p
-          class="hint"
-          data-i18n="Il token rimane in questa scheda. Endpoint e chiave LLM si impostano sul server."
-        >
-          Il token rimane in questa scheda. Endpoint e chiave LLM si impostano
-          sul server.
         </p>
         <section id="providerSettings" hidden>
           <p id="ollamaConfig" class="hint"></p>

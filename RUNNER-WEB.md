@@ -15,7 +15,7 @@ docker pull node:24-bookworm-slim
 docker pull python:3.12-slim
 ```
 
-Configurare `JENNY_URL`, `JENNY_TOKEN` e `WORKSPACES_DIR` nell'ambiente del worker. Il token è quello del server Jenny; non inserirlo in file da pubblicare. Esempio con token già esportato:
+Dalla 0.7 solo l'amministratore può usare runner e terminale. Configurare `JENNY_URL`, `JENNY_WORKER_TOKEN` e `WORKSPACES_DIR` nel worker. Il segreto casuale (almeno 24 caratteri) deve coincidere con `JENNY_WORKER_TOKEN` nel `.env` del server; non usare password utente o il vecchio JENNY_TOKEN. Aggiornare insieme server e worker. I job includono il proprietario, verificato in acquisizione e completamento. La radice workspace deve essere quella globale, non una sottocartella personale. Esempio con segreto già esportato:
 
 ```sh
 JENNY_URL=http://127.0.0.1:3000 WORKSPACES_DIR=/docker/stacks/jenny-web/workspaces node web/scripts/runner-worker.cjs

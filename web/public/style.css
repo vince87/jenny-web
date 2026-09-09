@@ -874,6 +874,44 @@ input[type="checkbox"] {
 .approval-actions button {
   font-size: 0.75rem;
 }
+.login-page {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  overflow: auto;
+}
+.login-card {
+  display: block;
+  height: auto;
+  overflow: visible;
+  width: min(420px, 92vw);
+  padding: 28px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.login-card label {
+  display: block;
+  margin-top: 16px;
+}
+.login-card input {
+  width: 100%;
+  margin: 8px 0;
+}
+.account-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  overflow-wrap: anywhere;
+  background: var(--surface);
+  padding: 4px;
+  border-radius: 8px;
+}
+#accountDialog {
+  max-height: 88vh;
+  overflow: auto;
+}
 dialog {
   background: var(--surface);
   color: var(--text);

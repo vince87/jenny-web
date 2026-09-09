@@ -25,20 +25,22 @@ jobs:
           "$RUNNER_TEMP/jenny-node24" web/scripts/runner-smoke.cjs
       - name: Compose health and persistent volumes
         run: |
-          export JENNY_TOKEN="$(openssl rand -hex 32)"
+          docker compose build jenny-web
+          docker compose run --rm --no-deps -T -e JENNY_CI_SMOKE=1 -v "$PWD/web/test/compose-smoke.cjs:/ci-test.cjs:ro" --entrypoint node jenny-web /ci-test.cjs init
           docker compose up -d --build
           for i in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:3000/healthz; then break; fi
             sleep 2
           done
           curl -fsS http://127.0.0.1:3000/healthz
+          docker compose exec -T -e JENNY_CI_SMOKE=1 jenny-web node - < web/test/compose-smoke.cjs
           docker compose exec -T jenny-web node -e 'if(process.getuid()===0)process.exit(1);require("fs").writeFileSync("/data/ci-marker","persisted")'
           docker compose restart
           sleep 5
           docker compose exec -T jenny-web node -e 'if(require("fs").readFileSync("/data/ci-marker","utf8")!=="persisted")process.exit(1)'
+          docker compose exec -T -e JENNY_CI_SMOKE=1 jenny-web node - < web/test/compose-smoke.cjs
       - name: Diagnostics and cleanup
         if: always()
         run: |
-          export JENNY_TOKEN=ci-cleanup-placeholder-token
           docker compose logs --tail=100
           docker compose down -v

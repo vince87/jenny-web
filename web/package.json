@@ -1,6 +1,6 @@
 {
   "name": "jenny-web",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "private": true,
   "license": "MIT",
   "description": "Browser and Docker entrypoint derived from SaltyPretz3l/jenny",

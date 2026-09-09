@@ -6,7 +6,8 @@ services:
     ports:
       - "${JENNY_BIND:-127.0.0.1}:${JENNY_PORT:-3000}:3000"
     environment:
-      JENNY_TOKEN: "${JENNY_TOKEN:?Imposta JENNY_TOKEN nel file .env}"
+      JENNY_COOKIE_SECURE: "${JENNY_COOKIE_SECURE:-false}"
+      JENNY_WORKER_TOKEN: "${JENNY_WORKER_TOKEN:-}"
       LLM_PROVIDER: "${LLM_PROVIDER:-ollama}"
       LLM_STREAMING: "${LLM_STREAMING:-true}"
       OLLAMA_NUM_CTX: "${OLLAMA_NUM_CTX:-8192}"
