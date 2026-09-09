@@ -17,6 +17,12 @@ jobs:
         run: |
           docker build -t jenny-web:test .
           docker run --rm --entrypoint node jenny-web:test --test 'web/test/*.test.cjs'
+      - name: Real isolated terminal worker
+        run: |
+          docker create --name jenny-ci-node-runtime node:24-bookworm-slim
+          docker cp jenny-ci-node-runtime:/usr/local/bin/node "$RUNNER_TEMP/jenny-node24"
+          docker rm jenny-ci-node-runtime
+          "$RUNNER_TEMP/jenny-node24" web/scripts/runner-smoke.cjs
       - name: Compose health and persistent volumes
         run: |
           export JENNY_TOKEN="$(openssl rand -hex 32)"
