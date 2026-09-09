@@ -16,7 +16,7 @@ jobs:
       - name: Build and integration tests on Linux
         run: |
           docker build -t jenny-web:test .
-          docker run --rm --entrypoint node jenny-web:test --test 'web/test/*.test.cjs'
+          docker run --rm -v "$PWD/web/test:/app/web/test:ro" --entrypoint sh jenny-web:test -c 'test -f web/test/extensions.test.cjs && node --test web/test/*.test.cjs'
       - name: Real isolated terminal worker
         run: |
           docker create --name jenny-ci-node-runtime node:24-bookworm-slim
