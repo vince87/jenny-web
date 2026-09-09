@@ -1,0 +1,9 @@
+*
+!services/
+!services/**
+!web/
+!web/**
+web/test/
+!LICENSE
+!NOTICE
+!Dockerfile

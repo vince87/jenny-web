@@ -1,0 +1,4 @@
+# Aggiunta opzionale per il nuovo Ollama: richiede NVIDIA Container Toolkit.
+services:
+  ollama:
+    gpus: all

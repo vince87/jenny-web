@@ -1,0 +1,159 @@
+name: Release
+
+# Builds and publishes the Windows and macOS installers for a tagged release.
+# Each runner builds its OWN sidecar (PyInstaller is platform-specific) and runs
+# electron-builder for its OS, publishing to the GitHub Release for the tag.
+#
+# Signing is OPTIONAL: with no signing secrets set, both installers build and
+# publish UNSIGNED (shippable today; users click through SmartScreen / Gatekeeper
+# "open anyway"). Adding the secrets below flips the same workflow to signed.
+#
+# The macOS leg uses build/icon.png (electron-builder generates the .icns); fail-fast
+# is disabled so the Windows installer still ships even if the mac leg has trouble,
+# and the leg is marked experimental (continue-on-error) so it cannot mark the run
+# failed while Windows shipped.
+#
+# The `prepare` job creates the draft release for the tag exactly once BEFORE the
+# build matrix. electron-builder's GitHub publisher creates a draft when it finds
+# none for the tag, and two legs starting together both created one on the 1.0.0
+# dry run, splitting the blockmap from the installer + latest.yml.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    name: Prepare draft release
+    # The private source repository carries this same file (the public tree is an
+    # export of it) and the release tag is mirrored back onto it, so a tag push
+    # there would build again and try to publish into the public repository.
+    # Run only in the public repository; `build` needs this job, so it is skipped
+    # along with it.
+    if: github.repository == 'SaltyPretz3l/jenny'
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # On a tag push the tag is the ref; on workflow_dispatch (dry run) it is the
+      # same v-prefixed package.json version electron-builder derives, so both
+      # paths converge on one release name.
+      - name: Resolve the release tag
+        id: tag
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            tag="$GITHUB_REF_NAME"
+          else
+            tag="v$(node -p "require('./package.json').version")"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      # A draft never creates the git tag, so a dry run still tags nothing. gh
+      # resolves drafts by tag name, which is what stops a second draft.
+      - name: Ensure exactly one draft release exists for the tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "release $TAG already exists; the build legs upload into it"
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --title "$TAG" \
+              --notes "Assets are uploaded by the release workflow's build legs."
+          fi
+
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            eb_flag: "--win"
+            experimental: false
+          - os: macos-latest
+            eb_flag: "--mac"
+            experimental: true
+    runs-on: ${{ matrix.os }}
+    # Unsigned, never run on real hardware, and its hash lock carries only win_amd64
+    # wheels today: the mac leg must not fail the Release run the Windows leg passed.
+    continue-on-error: ${{ matrix.experimental }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      # preload.bundle.js is gitignored and untracked, and electron-builder.yml
+      # has no beforeBuild/beforePack hook -- without this step the asar ships
+      # with no preload and the sandboxed window boots with window.jennyShell
+      # undefined. Pinned by scripts/checks/check_release_version_policy.py.
+      - name: Build sandboxed preload bundle
+        run: npm run build:preload
+
+      - name: Install Python dependencies
+        shell: bash
+        run: |
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-build-lock.txt
+          python -m pip install --require-hashes -r requirements-lock.txt
+          python -m pip install --no-build-isolation --no-deps -e .
+          python -m pip check
+
+      - name: Build offline managed-Python runtime (Windows)
+        if: runner.os == 'Windows'
+        run: python scripts/build-python-runtime-bundle.py
+
+      - name: Verify offline managed-Python runtime (Windows)
+        if: runner.os == 'Windows'
+        run: python scripts/checks/check_python_runtime_bundle.py
+
+      - name: Build sidecar artifact (this OS)
+        run: python scripts/packaging/build_sidecar_artifact.py
+
+      - name: Emit sidecar SBOM
+        run: python scripts/packaging/emit_sbom.py
+
+      - name: Build & publish installer
+        run: npm exec -- electron-builder ${{ matrix.eb_flag }} --config electron-builder.yml --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # --- Windows Authenticode (optional; unsigned build when unset) ---
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          # --- Apple Developer ID signing + notarization (optional) ---
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Upload installer artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jenny-installer-${{ matrix.os }}
+          path: dist/**
+          if-no-files-found: ignore

@@ -1,0 +1,35 @@
+services:
+  jenny-web:
+    build: .
+    restart: unless-stopped
+    init: true
+    ports:
+      - "${JENNY_BIND:-127.0.0.1}:${JENNY_PORT:-3000}:3000"
+    environment:
+      JENNY_TOKEN: "${JENNY_TOKEN:?Imposta JENNY_TOKEN nel file .env}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-ollama}"
+      LLM_STREAMING: "${LLM_STREAMING:-true}"
+      OLLAMA_NUM_CTX: "${OLLAMA_NUM_CTX:-8192}"
+      OLLAMA_NUM_PREDICT: "${OLLAMA_NUM_PREDICT:-2048}"
+      OLLAMA_KEEP_ALIVE: "${OLLAMA_KEEP_ALIVE:-10m}"
+      OLLAMA_TEMPERATURE: "${OLLAMA_TEMPERATURE:-0.2}"
+      OLLAMA_THINK: "${OLLAMA_THINK:-auto}"
+      LLM_BASE_URL: "${LLM_BASE_URL:-http://host.docker.internal:11434}"
+      LLM_MODEL: "${LLM_MODEL:-}"
+      LLM_API_KEY: "${LLM_API_KEY:-}"
+      LLM_TIMEOUT_MS: "${LLM_TIMEOUT_MS:-300000}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - jenny-data:/data
+      - jenny-workspaces:/workspaces
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  jenny-data:
+  jenny-workspaces:

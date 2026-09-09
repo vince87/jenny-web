@@ -1,0 +1,471 @@
+<!doctype html>
+
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title data-i18n="Jenny Web — Il tuo coding workspace">
+      Jenny Web — Il tuo coding workspace
+    </title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/i18n.js" defer></script>
+    <script src="/presentation.js" defer></script>
+    <script src="/request-state.js" defer></script>
+    <script src="/sessions-ui.js" defer></script>
+    <script src="/editor-ui.js" defer></script>
+    <script src="/workbench-ui.js" defer></script>
+    <script src="/app.js" defer></script>
+  </head>
+  <body data-view="chat"><a class="skip-link" href="#prompt" data-i18n="Vai al messaggio">Vai al messaggio</a>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Jenny Web home"
+        ><span class="brand-mark">j.</span>jenny<span class="brand-web"
+          >web</span
+        ></a
+      ><span class="release">PREVIEW / 0.5</span><span class="spacer"></span
+      ><label class="sr-only" for="language" data-i18n="Lingua">Lingua</label
+      ><select id="language" aria-label="Lingua" data-i18n-aria-label="Lingua">
+        <option value="it">Italiano</option>
+        <option value="en">English</option></select
+      ><span id="connection" class="connection" data-i18n="Connessione…"
+        >Connessione…</span
+      ><button
+        id="theme"
+        class="quiet"
+        aria-label="Cambia tema"
+        title="Cambia tema"
+        data-i18n-title="Cambia tema"
+        data-i18n-aria-label="Cambia tema"
+      >
+        ◐</button
+      ><button id="workbenchButton" data-i18n="Strumenti progetto">Strumenti progetto</button><button id="settingsButton" class="quiet" data-i18n="Connessione">
+        Connessione
+      </button>
+    </header>
+    <div id="notice" role="status" hidden></div>
+    <div
+      class="mobile-tabs"
+      role="group"
+      aria-label="Vista"
+      data-i18n-aria-label="Vista"
+    >
+      <button id="showChat" aria-pressed="true" data-i18n="Conversazione">
+        Conversazione</button
+      ><button id="showFiles" aria-pressed="false" data-i18n="File ed editor">
+        File ed editor
+      </button>
+    </div>
+    <main>
+      <aside class="sidebar">
+        <div class="workspace-label">
+          <span data-i18n="IL TUO PROGETTO">IL TUO PROGETTO</span
+          ><button
+            id="addWorkspace"
+            class="quiet icon"
+            aria-label="Crea workspace"
+            title="Crea workspace"
+            data-i18n-title="Crea workspace"
+            data-i18n-aria-label="Crea workspace"
+          >
+            +
+          </button>
+        </div>
+        <label class="sr-only" for="workspace">Workspace</label
+        ><select id="workspace"></select>
+        <button
+          id="newChat"
+          class="new-chat"
+          data-i18n="＋ Nuova conversazione"
+        >
+          ＋ Nuova conversazione
+        </button>
+        <div class="section-title" data-i18n="CONVERSAZIONI">CONVERSAZIONI</div>
+        <label class="sr-only" for="chatSearch" data-i18n="Cerca chat">Cerca chat</label><input id="chatSearch" type="search" maxlength="200" placeholder="Cerca chat" data-i18n-placeholder="Cerca chat"><label><input id="showArchived" type="checkbox"><span data-i18n="Chat archiviate">Chat archiviate</span></label><button id="archiveChat" data-i18n="Archivia / ripristina">Archivia / ripristina</button>
+        <nav
+          id="sessions"
+          aria-label="Conversazioni"
+          data-i18n-aria-label="Conversazioni"
+        ></nav>
+        <div class="sidebar-note">
+          <span class="note-icon">⌘</span>
+          <div>
+            <span data-i18n="Il codice resta tuo.">Il codice resta tuo.</span
+            ><small data-i18n="Modelli locali · file locali"
+              >Modelli locali · file locali</small
+            >
+          </div>
+        </div>
+        <footer>
+          <span data-i18n="Basato su">Basato su</span
+          ><a
+            href="https://github.com/SaltyPretz3l/jenny"
+            target="_blank"
+            rel="noreferrer"
+            >Jenny / SaltyPretz3l</a
+          ><br /><span data-i18n="Licenza MIT">Licenza MIT</span>
+        </footer>
+      </aside>
+      <section class="chat-pane">
+        <div class="pane-header">
+          <div class="heading">
+            <span class="eyebrow" data-i18n="CONVERSAZIONE">CONVERSAZIONE</span>
+            <h1 id="chatTitle" data-i18n="Il tuo spazio di lavoro">
+              Il tuo spazio di lavoro
+            </h1>
+          </div>
+          <button
+            id="renameChat"
+            class="quiet"
+            title="Rinomina conversazione"
+            aria-label="Rinomina conversazione"
+            data-i18n-title="Rinomina conversazione"
+            data-i18n-aria-label="Rinomina conversazione"
+          >
+            ✎</button
+          ><button
+            id="exportChat"
+            class="quiet"
+            title="Esporta conversazione"
+            data-i18n-title="Esporta conversazione"
+            data-i18n="Esporta"
+          >
+            Esporta
+          </button>
+        </div>
+        <div class="run-status">
+          <span id="chatState" data-i18n="Pronto per iniziare"
+            >Pronto per iniziare</span
+          ><span class="spacer"></span><span id="metrics"></span
+          ><button id="stop" hidden data-i18n="■ Ferma">■ Ferma</button>
+        </div>
+        <div id="messages" aria-live="polite">
+          <div class="welcome">
+            <div class="welcome-label">
+              <span class="mini-mark">j.</span
+              ><span data-i18n="IL TUO ASSISTENTE DI SVILUPPO"
+                >IL TUO ASSISTENTE DI SVILUPPO</span
+              >
+            </div>
+            <h2>
+              <span data-i18n="Un’idea.">Un’idea.</span><br /><span
+                data-i18n="Il prossimo"
+                >Il prossimo</span
+              ><em>commit.</em>
+            </h2>
+            <p>
+              <span data-i18n="Esplora il progetto, ragiona sul codice"
+                >Esplora il progetto, ragiona sul codice</span
+              ><br /><span data-i18n="e decidi quali modifiche applicare."
+                >e decidi quali modifiche applicare.</span
+              >
+            </p>
+            <div class="suggestions">
+              <button
+                data-prompt="Esplora il workspace e spiegami la struttura del progetto."
+                data-i18n-data-prompt="Esplora il workspace e spiegami la struttura del progetto."
+              >
+                <span>01</span
+                ><strong data-i18n="Esplora il progetto"
+                  >Esplora il progetto</strong
+                ><small data-i18n="Trova il punto da cui partire"
+                  >Trova il punto da cui partire</small
+                ></button
+              ><button
+                data-prompt="Cerca possibili problemi nel codice del workspace. Leggi i file prima di proporre modifiche."
+                data-i18n-data-prompt="Cerca possibili problemi nel codice del workspace. Leggi i file prima di proporre modifiche."
+              >
+                <span>02</span
+                ><strong data-i18n="Rivedi il codice">Rivedi il codice</strong
+                ><small data-i18n="Controlla prima di cambiare"
+                  >Controlla prima di cambiare</small
+                ></button
+              ><button
+                data-prompt="Leggi i file presenti e proponi un README.md con avvio, configurazione e struttura del progetto."
+                data-i18n-data-prompt="Leggi i file presenti e proponi un README.md con avvio, configurazione e struttura del progetto."
+              >
+                <span>03</span
+                ><strong data-i18n="Scrivi la documentazione"
+                  >Scrivi la documentazione</strong
+                ><small data-i18n="Rendi il progetto più chiaro"
+                  >Rendi il progetto più chiaro</small
+                >
+              </button>
+            </div>
+            <div
+              class="welcome-foot"
+              data-i18n="Ogni modifica dell’agente passa dalla tua approvazione."
+            >
+              Ogni modifica dell’agente passa dalla tua approvazione.
+            </div>
+          </div>
+        </div>
+        <div id="partial" class="streaming-message" hidden>
+          <span class="eyebrow" data-i18n="JENNY STA SCRIVENDO"
+            >JENNY STA SCRIVENDO</span
+          >
+          <div id="partialText"></div>
+        </div>
+        <section
+          id="approval"
+          hidden
+          aria-label="Approvazione modifica"
+          data-i18n-aria-label="Approvazione modifica"
+        >
+          <div class="approval-title">
+            <span class="approval-symbol">↳</span>
+            <div>
+              <strong data-i18n="Una modifica da rivedere"
+                >Una modifica da rivedere</strong
+              ><span id="approvalPath"></span>
+            </div>
+            <span class="spacer"></span><span id="diffCount"></span>
+          </div>
+          <div id="batchChoices"></div><div class="review-tabs">
+            <button id="unifiedView" class="active" data-i18n="Modifiche">
+              Modifiche</button
+            ><button id="fullView" data-i18n="Prima / dopo">
+              Prima / dopo
+            </button>
+          </div>
+          <div id="unifiedDiff"></div>
+          <div id="splitDiff" class="diff" hidden>
+            <div>
+              <span data-i18n="PRIMA">PRIMA</span>
+              <pre id="before"></pre>
+            </div>
+            <div>
+              <span data-i18n="DOPO">DOPO</span>
+              <pre id="after"></pre>
+            </div>
+          </div>
+          <div class="approval-actions">
+            <span id="approvalHint" data-i18n="Si applica solo a questo file."
+              >Si applica solo a questo file.</span
+            ><button id="deny" data-i18n="Rifiuta">Rifiuta</button
+            ><button id="approve" class="primary" data-i18n="Approva modifica">
+              Approva modifica
+            </button>
+          </div>
+        </section>
+        <div id="contextIndicator" role="status"><label for="contextProgress" data-i18n="Contesto stimato">Contesto stimato</label> <progress id="contextProgress" max="1" value="0"></progress><span id="contextDetails"></span></div>
+        <form id="composer">
+          <label class="sr-only" for="prompt" data-i18n="Messaggio a Jenny"
+            >Messaggio a Jenny</label
+          ><textarea
+            id="prompt"
+            rows="3"
+            placeholder="Cosa vuoi costruire o migliorare?"
+            required
+            data-i18n-placeholder="Cosa vuoi costruire o migliorare?"
+          ></textarea>
+          <div class="attachment-controls"><label for="attachments" data-i18n="Allega testo">Allega testo</label><input id="attachments" type="file" multiple accept="text/*,.json,.js,.ts,.py,.md,.yaml,.yml,.css,.html,.csv,.txt"><button id="attachCurrent" type="button" data-i18n="Allega file aperto">Allega file aperto</button><div id="attachmentList"></div></div>
+          <div class="composer-bottom"><label class="sr-only" for="profile" data-i18n="Profilo Ollama">Profilo Ollama</label><select id="profile"><option value="server" data-i18n="Profilo server">Profilo server</option><option value="light" data-i18n="Leggero">Leggero</option><option value="balanced" data-i18n="Bilanciato">Bilanciato</option><option value="extended" data-i18n="Contesto esteso">Contesto esteso</option></select>
+            <label class="tool-toggle"
+              ><input type="checkbox" id="useTools" checked /><span
+                data-i18n="Agente"
+                >Agente</span
+              ></label
+            ><label class="sr-only" for="model" data-i18n="Modello locale"
+              >Modello locale</label
+            ><input
+              id="model"
+              list="models"
+              placeholder="Seleziona modello"
+              autocomplete="off"
+              data-i18n-placeholder="Seleziona modello"
+            /><datalist id="models"></datalist
+            ><button
+              class="primary send"
+              id="send"
+              type="submit"
+              data-i18n="Invia ↗"
+            >
+              Invia ↗
+            </button>
+          </div>
+        </form>
+        <div class="composer-hint">
+          <span data-i18n="Ctrl ↵ per inviare">Ctrl ↵ per inviare</span
+          ><span data-i18n="Letture automatiche · scritture su approvazione"
+            >Letture automatiche · scritture su approvazione</span
+          >
+        </div>
+      </section>
+      <div
+        class="divider"
+        id="divider"
+        role="separator"
+        tabindex="0"
+        aria-label="Larghezza pannello file"
+        aria-orientation="vertical"
+        aria-valuemin="25"
+        aria-valuemax="60"
+        aria-valuenow="40"
+        data-i18n-aria-label="Larghezza pannello file"
+      ></div>
+      <section class="files-pane">
+        <div class="pane-header">
+          <div class="heading">
+            <span class="eyebrow">WORKSPACE</span>
+            <h2 data-i18n="File del progetto">File del progetto</h2>
+          </div>
+          <button
+            id="refreshFiles"
+            class="quiet"
+            aria-label="Aggiorna file"
+            data-i18n-aria-label="Aggiorna file"
+          >
+            ↻</button
+          ><button id="newFile">+ File</button>
+        </div>
+        <form id="searchForm" class="search">
+          <label class="sr-only" for="fileSearch" data-i18n="Cerca nel progetto"
+            >Cerca nel progetto</label
+          ><input
+            id="fileSearch"
+            placeholder="Cerca testo o file…"
+            maxlength="200"
+            data-i18n-placeholder="Cerca testo o file…"
+          /><button
+            title="Cerca"
+            aria-label="Cerca"
+            data-i18n-title="Cerca"
+            data-i18n-aria-label="Cerca"
+          >
+            ⌕</button
+          ><button
+            type="button"
+            id="clearSearch"
+            aria-label="Chiudi ricerca"
+            hidden
+            data-i18n-aria-label="Chiudi ricerca"
+          >
+            ×
+          </button>
+        </form>
+        <div class="file-actions">
+          <button id="up" class="quiet">↑</button><span id="folder">/</span
+          ><span id="fileCount"></span>
+        </div>
+        <nav
+          id="files"
+          aria-label="File del workspace"
+          data-i18n-aria-label="File del workspace"
+        ></nav>
+        <div class="editor-title">
+          <span class="file-dot"></span
+          ><span id="fileName" data-i18n="Nessun file aperto"
+            >Nessun file aperto</span
+          ><button
+            id="previewCode"
+            class="quiet"
+            disabled
+            data-i18n="Anteprima"
+          >
+            Anteprima</button
+          ><button id="fileHistory" data-i18n="Cronologia file">
+            Cronologia file</button
+          ><button id="saveFile" disabled data-i18n="Salva">Salva</button>
+        </div>
+        <div class="editor-wrap">
+          <pre id="lineNumbers" aria-hidden="true">1</pre>
+          <label class="sr-only" for="editor" data-i18n="Contenuto file"
+            >Contenuto file</label
+          ><textarea
+            id="editor"
+            spellcheck="false"
+            placeholder="Apri un file per iniziare a lavorare."
+            disabled
+            data-i18n-placeholder="Apri un file per iniziare a lavorare."
+          ></textarea>
+          <pre id="codePreview" hidden></pre>
+        </div>
+        <div class="editor-status">
+          <span id="cursorPosition" data-i18n="Riga 1, colonna 1"
+            >Riga 1, colonna 1</span
+          ><span class="spacer"></span
+          ><span id="fileInfo" data-i18n="Testo · UTF-8">Testo · UTF-8</span
+          ><span>Ctrl S</span>
+        </div>
+      </section>
+    </main>
+    <dialog id="settings">
+      <form id="settingsForm">
+        <div class="dialog-eyebrow">JENNY WEB</div>
+        <h2>
+          <span data-i18n="Il tuo server.">Il tuo server.</span><br /><span
+            data-i18n="Il tuo modello."
+            >Il tuo modello.</span
+          >
+        </h2>
+        <p id="endpoint" data-i18n="Endpoint configurato sul server">
+          Endpoint configurato sul server
+        </p>
+        <label for="token" data-i18n="Token di accesso a Jenny"
+          >Token di accesso a Jenny</label
+        ><input
+          type="password"
+          id="token"
+          autocomplete="off"
+          placeholder="Incolla JENNY_TOKEN"
+          data-i18n-placeholder="Incolla JENNY_TOKEN"
+        />
+        <p
+          class="hint"
+          data-i18n="Il token rimane in questa scheda. Endpoint e chiave LLM si impostano sul server."
+        >
+          Il token rimane in questa scheda. Endpoint e chiave LLM si impostano
+          sul server.
+        </p>
+        <section id="providerSettings" hidden>
+          <p id="ollamaConfig" class="hint"></p>
+          <p id="ollamaCapabilities" class="hint"></p>
+          <pre id="ollamaRunning" class="hint"></pre>
+          <button type="button" id="checkOllama" data-i18n="Verifica Ollama">
+            Verifica Ollama
+          </button>
+        </section>
+        <div class="dialog-actions">
+          <button type="button" id="closeSettings" data-i18n="Chiudi">
+            Chiudi</button
+          ><button class="primary" data-i18n="Connetti">Connetti</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="nameDialog">
+      <form id="nameForm">
+        <h2 id="nameTitle" data-i18n="Nuovo workspace">Nuovo workspace</h2>
+        <label for="newName" id="nameLabel" data-i18n="Nome">Nome</label
+        ><input id="newName" required autocomplete="off" />
+        <div class="dialog-actions">
+          <button type="button" id="cancelName" data-i18n="Annulla">
+            Annulla</button
+          ><button class="primary" data-i18n="Conferma">Conferma</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="historyDialog">
+      <h2 data-i18n="Cronologia file">Cronologia file</h2>
+      <p
+        data-i18n="Scegli una versione per confrontarla. Il ripristino va salvato dall’editor."
+      >
+        Scegli una versione per confrontarla. Il ripristino va salvato
+        dall’editor.
+      </p>
+      <select id="historyVersions"></select>
+      <pre
+        id="historyPreview"
+      ></pre>
+      <button id="historyLoad" data-i18n="Carica nell’editor">
+        Carica nell’editor</button
+      ><button id="historyClose" data-i18n="Chiudi">Chiudi</button>
+    </dialog>
+  <dialog id="workbench" aria-labelledby="workbenchTitle"><header><h2 id="workbenchTitle" data-i18n="Strumenti progetto">Strumenti progetto</h2><button id="closeWorkbench" data-i18n="Chiudi">Chiudi</button></header>
+<nav class="workbench-tabs" aria-label="Strumenti" data-i18n-aria-label="Strumenti"><button data-panel="instructionsPanel" data-i18n="Istruzioni progetto">Istruzioni progetto</button><button data-panel="diagnosticsPanel" data-i18n="Diagnostica">Diagnostica</button><button data-panel="gitPanel">Git</button><button data-panel="runnerPanel" data-i18n="Test isolati">Test isolati</button><button data-panel="backupPanel" data-i18n="Backup ed export">Backup ed export</button></nav>
+<section id="instructionsPanel"><p data-i18n="JENNY.md guida i nuovi turni. Massimo 6000 caratteri.">JENNY.md guida i nuovi turni. Massimo 6000 caratteri.</p><label class="sr-only" for="projectInstructions" data-i18n="Istruzioni progetto">Istruzioni progetto</label><textarea id="projectInstructions" maxlength="6000" rows="12"></textarea><button id="saveInstructions" data-i18n="Salva istruzioni">Salva istruzioni</button></section>
+<section id="diagnosticsPanel" hidden><button id="runDiagnostics" data-i18n="Verifica configurazione">Verifica configurazione</button><div id="diagnosticsResult" role="status"></div></section>
+<section id="gitPanel" hidden><label for="gitAction" data-i18n="Vista Git">Vista Git</label><select id="gitAction"><option value="status" data-i18n="Stato">Stato</option><option value="diff" data-i18n="Modifiche">Modifiche</option><option value="staged" data-i18n="Modifiche in staging">Modifiche in staging</option><option value="log" data-i18n="Cronologia">Cronologia</option></select><button id="refreshGit" data-i18n="Aggiorna">Aggiorna</button><pre id="gitResult"></pre></section>
+<section id="runnerPanel" hidden><p data-i18n="Richiede il worker Docker sul server. Esegue una copia temporanea senza rete; il workspace resta invariato.">Richiede il worker Docker sul server. Esegue una copia temporanea senza rete; il workspace resta invariato.</p><label for="testRecipe" data-i18n="Test da eseguire">Test da eseguire</label><select id="testRecipe"><option value="node-test">Node — node --test</option><option value="python-compile">Python — compileall</option></select><button id="queueTest" data-i18n="Approva ed esegui">Approva ed esegui</button><button id="refreshTests" data-i18n="Aggiorna">Aggiorna</button><div id="testResults"></div></section>
+<section id="backupPanel" hidden><button id="exportAllChats" data-i18n="Esporta tutte le chat">Esporta tutte le chat</button><p data-i18n="Per il backup completo di file e dati, ferma Jenny e usa la procedura in BACKUP-WEB.md. Il ripristino crea una destinazione nuova.">Per il backup completo di file e dati, ferma Jenny e usa la procedura in BACKUP-WEB.md. Il ripristino crea una destinazione nuova.</p></section></dialog></body>
+</html>
