@@ -57,6 +57,9 @@ async function connectEvents() {
           const data = JSON.parse(line.slice(6));
           if (data.delta) {
             session.partial = data.partial;
+            session.partialThinking = data.partialThinking;
+            session.phase = data.phase;
+            paintActivity();
             $("partial").hidden = !data.partial;
             $("partialText").textContent = data.partial;
           } else {

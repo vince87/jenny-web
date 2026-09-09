@@ -1,4 +1,10 @@
-# Validazione Jenny Web 0.5.0
+# Validazione Jenny Web 0.6.0
+
+2026-09-09, Windows / Node 24.14.0: suite aggiornata con test plugin, revoca e approvazioni, MCP HTTP JSON/SSE/paginazione/cleanup, isolamento terminale, protezioni URL e indicatore thinking. Due test POSIX sono esclusi su Windows e previsti nella CI Linux. Il conteggio definitivo e l'esito Docker saranno aggiunti dopo la verifica della revisione pubblicata.
+
+Prova esterna read-only: lettura di example.com riuscita; DuckDuckGo risponde HTTP 202 anti-bot. Ricerca Brave implementata ma non verificata con chiave reale. MCP testato contro server HTTP simulato, non un servizio terzo. DOM simulato, non collaudo browser. Nessun accesso al server di casa.
+
+## Validazione storica 0.5.0 (non attribuire questi risultati alla 0.6)
 
 Esecuzione UTC: 2026-09-08T22:52:43.722968+00:00
 

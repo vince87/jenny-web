@@ -53,6 +53,8 @@ async function createApp(options = {}) {
     timeout: options.timeout || Number(process.env.LLM_TIMEOUT_MS || 300000),
   });
   const runner = new RunnerQueue(agent.store);
+  const extensions = new (require('./extensions.cjs').Extensions)(dataDir, runner);
+  agent.extensions = extensions;
   const publicDir = path.join(__dirname, "public");
   const allowedOrigins = new Set(
     (process.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean),
@@ -89,6 +91,8 @@ async function createApp(options = {}) {
         const file = {
           "/": "index.html",
           "/app.js": "app.js",
+          "/activity-ui.js": "activity-ui.js",
+          "/extensions-ui.js": "extensions-ui.js",
           "/request-state.js": "request-state.js",
           "/sessions-ui.js": "sessions-ui.js",
           "/editor-ui.js": "editor-ui.js",
@@ -157,11 +161,20 @@ async function createApp(options = {}) {
           ollama: agent.provider.settings || null,
           model: agent.model,
           baseURL: agent.baseURL,
-          version: "0.5.0",
+          version: "0.6.0",
           profiles: PROFILES,
           streaming: agent.provider.streaming,
-          tools: agent.registry.getToolSchemas().map((t) => t.function.name),
+          tools: [...agent.registry.getToolSchemas(), ...extensions.schemas()].map((t) => t.function.name),
         });
+      if (route === '/api/extensions' && method === 'GET') return json(extensions.list());
+      if (route === '/api/extensions/install' && method === 'POST') return json(extensions.install(body),201);
+      if (route === '/api/extensions/manage' && method === 'POST') return json(extensions.manage(body));
+      if (route === '/api/extensions/web' && method === 'POST') return json(extensions.configureWeb(body));
+      if (route === '/api/extensions/execute' && method === 'POST') {
+        if(body.confirmed!==true)throw Error('Explicit execution confirmation required.');
+        await workspaces.service(body.workspace);
+        return json(await extensions.execute(body.name,body.arguments,body.workspace,AbortSignal.timeout(60000)));
+      }
       if (route === "/api/provider-status" && method === "GET")
         return json(
           agent.provider.kind === "ollama"

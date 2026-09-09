@@ -16,6 +16,8 @@
     <script src="/editor-ui.js" defer></script>
     <script src="/workbench-ui.js" defer></script>
     <script src="/app.js" defer></script>
+    <script src="/activity-ui.js" defer></script>
+    <script src="/extensions-ui.js" defer></script>
   </head>
   <body data-view="chat"><a class="skip-link" href="#prompt" data-i18n="Vai al messaggio">Vai al messaggio</a>
     <header class="topbar">
@@ -133,6 +135,7 @@
             Esporta
           </button>
         </div>
+        <button id="extensionsButton" data-i18n="Plugin, Web e Terminale">Plugin, Web e Terminale</button>
         <div class="run-status">
           <span id="chatState" data-i18n="Pronto per iniziare"
             >Pronto per iniziare</span
@@ -200,6 +203,7 @@
             </div>
           </div>
         </div>
+        <div id="activity" class="streaming-message" role="status" hidden><span id="activityLabel"></span><details id="liveThinking" hidden><summary data-i18n="Thinking del modello">Thinking del modello</summary><pre id="liveThinkingText"></pre></details></div>
         <div id="partial" class="streaming-message" hidden>
           <span class="eyebrow" data-i18n="JENNY STA SCRIVENDO"
             >JENNY STA SCRIVENDO</span
@@ -390,6 +394,26 @@
         </div>
       </section>
     </main>
+    <dialog id="extensionsDialog" aria-labelledby="extensionsTitle">
+      <h2 id="extensionsTitle" data-i18n="Plugin, Web e Terminale">Plugin, Web e Terminale</h2>
+      <button id="extensionsClose" data-i18n="Chiudi">Chiudi</button>
+      <button id="extensionsRefresh" data-i18n="Aggiorna">Aggiorna</button>
+      <div id="extensionsCatalog"></div><div id="extensionsInstalled"></div>
+      <h3 data-i18n="Collega server MCP">Collega server MCP</h3>
+      <p data-i18n="MCP HTTP 2025-11-25. Ogni chiamata richiede approvazione.">MCP HTTP 2025-11-25. Ogni chiamata richiede approvazione.</p>
+      <form id="mcpInstallForm">
+        <label for="mcpName" data-i18n="Nome">Nome</label><input id="mcpName" required maxlength="80">
+        <label for="mcpURL">URL MCP</label><input id="mcpURL" type="url" required>
+        <label for="mcpToken">Bearer token (HTTPS)</label><input id="mcpToken" type="password" autocomplete="off">
+        <label><input id="mcpPrivate" type="checkbox"><span data-i18n="Consenti endpoint nella rete privata">Consenti endpoint nella rete privata</span></label>
+        <button data-i18n="Installa">Installa</button>
+      </form>
+      <h3>Web</h3><form id="webForm"><label for="webInput" data-i18n="Ricerca o URL">Ricerca o URL</label><input id="webInput" required maxlength="1000"><button data-i18n="Cerca / Apri">Cerca / Apri</button></form><pre id="webOutput"></pre><div id="webLinks"></div>
+      <form id="webKeyForm"><label for="webKey">Brave Search API key</label><input id="webKey" type="password" autocomplete="off"><button data-i18n="Salva">Salva</button></form>
+      <h3 data-i18n="Terminale">Terminale</h3><p data-i18n="Comandi nella copia temporanea del workspace, senza rete. Richiede il worker Docker.">Comandi nella copia temporanea del workspace, senza rete. Richiede il worker Docker.</p>
+      <form id="terminalForm"><label for="terminalCommand" data-i18n="Comando">Comando</label><textarea id="terminalCommand" required maxlength="4000" rows="3"></textarea><button data-i18n="Approva ed esegui">Approva ed esegui</button></form><button id="terminalRefresh" data-i18n="Aggiorna">Aggiorna</button><div id="terminalOutput"></div>
+      <pre id="mcpOutput"></pre>
+    </dialog>
     <dialog id="settings">
       <form id="settingsForm">
         <div class="dialog-eyebrow">JENNY WEB</div>

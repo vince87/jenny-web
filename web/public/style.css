@@ -886,6 +886,14 @@ dialog {
 dialog::backdrop {
   background: #050b0cc9;
 }
+#extensionsDialog { width: min(780px, 92vw); max-height: 88vh; overflow: auto; }
+#extensionsDialog pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 300px; overflow: auto; }
+#extensionsDialog textarea { width: 100%; }
+#extensionsDialog input[type=checkbox] { width: auto; margin-right: 8px; }
+#extensionsCatalog > div, #extensionsInstalled > div { padding: 12px 0; border-bottom: 1px solid var(--line); }
+#extensionsDialog button { margin: 4px; }
+#activity { padding: 12px; color: var(--muted); border-left: 3px solid var(--accent); }
+#liveThinkingText { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 200px; overflow: auto; }
 dialog h2 {
   font-size: 1.7rem;
   font-weight: 500;

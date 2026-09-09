@@ -1,0 +1,78 @@
+'use strict';
+const fs=require('node:fs');
+const path=require('node:path');
+const {randomUUID}=require('node:crypto');
+const {readPage,request}=require('./network.cjs');
+const {MCP}=require('./mcp.cjs');
+const CATALOG=[{id:'web',name:'Web',description:'Ricerca e lettura di pagine pubbliche; ogni richiesta richiede approvazione.',kind:'builtin'},{id:'terminal',name:'Terminal',description:'Comandi nella copia temporanea del workspace, senza rete. Richiede il worker Docker.',kind:'builtin'},{id:'mcp',name:'MCP',description:'MCP HTTP 2025-11-25. Ogni chiamata richiede approvazione.',kind:'mcp'}];
+const SCHEMAS=[
+ ['web_search','Search public web pages. Requires approval.',{query:{type:'string'}},['query']],
+ ['web_read','Read a public HTTP(S) page and its links. Requires approval. No JavaScript rendering.',{url:{type:'string'}},['url']],
+ ['mcp_tools','Discover tools from an installed MCP plugin. Requires approval.',{plugin:{type:'string'}},['plugin']],
+ ['mcp_call','Call an installed MCP plugin tool. Requires approval for every call.',{plugin:{type:'string'},tool:{type:'string'},arguments:{type:'object'}},['plugin','tool','arguments']],
+ ['terminal_run','Queue a shell command in an isolated temporary copy of this workspace. Requires approval and Docker worker. Use terminal_status to read the result.',{command:{type:'string'}},['command']],
+ ['terminal_status','Read the result of an approved terminal job.',{id:{type:'string'}},['id']],
+];
+class Extensions {
+ constructor(dataDir,runner){this.file=path.join(dataDir,'extensions.json');this.runner=runner;this.items=fs.existsSync(this.file)?JSON.parse(fs.readFileSync(this.file,'utf8')):[];}
+ save(){const temp=this.file+'.'+randomUUID();fs.writeFileSync(temp,JSON.stringify(this.items),{mode:0o600,flag:'wx'});fs.renameSync(temp,this.file);}
+ list(){return {catalog:CATALOG,installed:this.items.map(({token,...item})=>({...item,hasToken:!!token}))};}
+ install(body){
+  if(body.confirmed!==true)throw Error('Confirm plugin permissions before installing.');
+  if(!['web','terminal','mcp'].includes(body.kind))throw Error('Unsupported plugin format.');
+  let item;
+  if(body.kind==='mcp'){
+    const url=new URL(body.url);
+    if(!['http:','https:'].includes(url.protocol)||url.username||url.password||url.hash)throw Error('Invalid MCP endpoint.');
+    if(typeof body.name!=='string'||!body.name.trim()||body.name.length>80)throw Error('Plugin name required.');
+    if(body.token && (typeof body.token!=='string'||body.token.length>4096||/[\r\n]/.test(body.token)))throw Error('Invalid bearer token.');
+    if(body.token && url.protocol!=='https:')throw Error('Bearer credentials require HTTPS.');
+    item={id:randomUUID(),kind:'mcp',name:body.name,url:url.href,token:body.token||'',privateNetwork:body.privateNetwork===true,enabled:true};
+  }else{if(this.items.some(i=>i.id===body.kind))throw Error('Plugin already installed.');item={id:body.kind,kind:body.kind,name:body.kind,enabled:true};}
+  if(this.items.length>=20)throw Error('Maximum 20 plugins.');this.items.push(item);this.save();return this.list();
+ }
+ manage({id,action,confirmed}){
+  const item=this.items.find(i=>i.id===id);if(!item)throw Error('Plugin not found.');
+  if(action==='remove'){if(confirmed!==true)throw Error('Removal confirmation required.');this.items=this.items.filter(i=>i!==item);}
+  else if(['enable','disable'].includes(action))item.enabled=action==='enable';else throw Error('Invalid plugin action.');
+  this.save();return this.list();
+ }
+ available(name){return name.startsWith('web_')?this.items.some(i=>i.id==='web'&&i.enabled):name.startsWith('terminal_')?this.items.some(i=>i.id==='terminal'&&i.enabled):this.items.some(i=>i.kind==='mcp'&&i.enabled);}
+ schemas(){return SCHEMAS.filter(([name])=>this.available(name)).map(([name,description,properties,required])=>({type:'function',function:{name,description,parameters:{type:'object',properties,required,additionalProperties:false}}}));}
+ validate(name,args){
+  const schema=SCHEMAS.find(s=>s[0]===name);if(!schema||!this.available(name))throw Error('Plugin unavailable or disabled.');
+  if(!args||Array.isArray(args)||typeof args!=='object'||Object.keys(args).some(k=>!Object.hasOwn(schema[2],k)))throw Error('Invalid extension arguments.');
+  for(const key of schema[3])if(typeof args[key]!==schema[2][key].type||args[key]===null||Array.isArray(args[key]))throw Error('Invalid extension argument: '+key);
+  if(JSON.stringify(args).length>16000)throw Error('Extension arguments too large.');
+  if(name.startsWith('mcp_')&&!this.items.some(i=>i.id===args.plugin&&i.kind==='mcp'&&i.enabled))throw Error('MCP plugin not installed.');
+ }
+ async execute(name,args,workspace,signal){
+  this.validate(name,args);
+  if(name==='web_read')return readPage(args.url,signal);
+  if(name==='web_search'){
+    if(!args.query.trim()||args.query.length>300)throw Error('Query required (max 300).');
+    const key=this.items.find(i=>i.id==='web')?.token || process.env.BRAVE_SEARCH_API_KEY;
+    if(key){
+      const r=await request('https://api.search.brave.com/res/v1/web/search?q='+encodeURIComponent(args.query)+'&count=5',{signal,headers:{Accept:'application/json','X-Subscription-Token':key}});
+      if(r.status!==200)throw Error('Search provider HTTP '+r.status);
+      const data=JSON.parse(r.text);const links=(data.web?.results||[]).slice(0,5).map(x=>({title:String(x.title).slice(0,200),url:String(x.url).slice(0,2000),description:String(x.description||'').slice(0,1000)}));
+      return {text:links.map(x=>x.title+'\n'+x.url+'\n'+x.description).join('\n\n'),links,untrusted:true};
+    }
+    try{return await readPage('https://html.duckduckgo.com/html/?q='+encodeURIComponent(args.query),signal);}
+    catch{throw Error('Search provider unavailable or anti-bot verification required. Configure a Brave Search API key in the plugin settings.');}
+  }
+  if(name==='terminal_run')return this.runner.create(workspace,'terminal',true,args.command);
+  if(name==='terminal_status'){const job=this.runner.list().find(j=>j.id===args.id&&j.workspace===workspace);if(!job)throw Error('Job not found.');return job;}
+  const item=this.items.find(i=>i.id===args.plugin&&i.enabled);
+  const client=new MCP(item);
+  try {
+    const result=name==='mcp_tools'?await client.list(signal):await client.call(args.tool,args.arguments,signal);
+    return {plugin:item.id,result:JSON.stringify(result).slice(0,16000),untrusted:true};
+  } finally { await client.close(); }
+ }
+ configureWeb({token,confirmed}){
+  if(confirmed!==true||typeof token!=='string'||token.length>4096||/[\r\n]/.test(token))throw Error('Invalid search credentials.');
+  const item=this.items.find(i=>i.id==='web');if(!item)throw Error('Install Web first.');item.token=token;this.save();return this.list();
+ }
+}
+module.exports={Extensions,SCHEMAS};

@@ -18,10 +18,11 @@ class RunnerQueue {
       const {lease,...j}=job;return j;
     });
   }
-  create(workspace,recipe,confirmed) {
-    if(!Object.hasOwn(RECIPES,recipe) || confirmed!==true) throw new Error('Conferma richiesta per il runner.');
+  create(workspace,recipe,confirmed,command) {
+    if((!Object.hasOwn(RECIPES,recipe) && recipe!=='terminal') || confirmed!==true) throw new Error('Conferma richiesta per il runner.');
+    if(recipe==='terminal' && (typeof command!=='string'||!command.trim()||command.length>4000||command.includes('\0')))throw Error('Command required (max 4000).');
     if(this.list().some(j=>['queued','running'].includes(j.status))) throw new Error('Un test è già in coda o in esecuzione.');
-    const j={id:randomUUID(),workspace,recipe,status:'queued',createdAt:new Date().toISOString(),output:''};this.save(j);return j;
+    const j={id:randomUUID(),workspace,recipe,...(recipe==='terminal'?{command}:{}),status:'queued',createdAt:new Date().toISOString(),output:''};this.save(j);return j;
   }
   claim() {
     const j=this.list().reverse().find(j=>j.status==='queued'); if(!j)return null;

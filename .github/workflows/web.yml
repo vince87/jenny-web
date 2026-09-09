@@ -1,0 +1,38 @@
+name: Jenny Web Docker
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact revision
+        run: |
+          git init .
+          git remote add origin https://github.com/vince87/jenny-web.git
+          git fetch --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+      - name: Build and integration tests on Linux
+        run: |
+          docker build -t jenny-web:test .
+          docker run --rm --entrypoint node jenny-web:test --test 'web/test/*.test.cjs'
+      - name: Compose health and persistent volumes
+        run: |
+          export JENNY_TOKEN="$(openssl rand -hex 32)"
+          docker compose up -d --build
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/healthz; then break; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:3000/healthz
+          docker compose exec -T jenny-web node -e 'if(process.getuid()===0)process.exit(1);require("fs").writeFileSync("/data/ci-marker","persisted")'
+          docker compose restart
+          sleep 5
+          docker compose exec -T jenny-web node -e 'if(require("fs").readFileSync("/data/ci-marker","utf8")!=="persisted")process.exit(1)'
+      - name: Diagnostics and cleanup
+        if: always()
+        run: |
+          export JENNY_TOKEN=ci-cleanup-placeholder-token
+          docker compose logs --tail=100
+          docker compose down -v

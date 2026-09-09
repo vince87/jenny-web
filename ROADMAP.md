@@ -1,6 +1,20 @@
 # Jenny Web — roadmap operativa
 
-Ultimo aggiornamento: 2026-09-09 · Release di lavoro: **0.5.0**
+Ultimo aggiornamento: 2026-09-09 · Release di lavoro: **0.6.0**
+
+## Tranche 0.6 richiesta dall'utente
+
+| ID | Stato | Implementazione / prossimo passo |
+| --- | --- | --- |
+| JW-040 | Implementato, browser e modello reale da collaudare | Attesa immediata, thinking Ollama live, scrittura e secondi trascorsi; test DOM simulato e adapter HTTP |
+| JW-041 | Implementato con limiti | Lettura pagine/link, blocco reti private, ricerca Brave con chiave GUI; lettura pubblica reale riuscita. DuckDuckGo bloccato anti-bot; Brave non provato senza chiave. Non è un browser JavaScript |
+| JW-042 | Implementato, GUI da collaudare | Catalogo locale Web/Terminale, connessioni MCP; installa, abilita, disabilita, rimuovi; configurazione persistita, credenziali non esposte nell'API |
+| JW-043 | Parziale | MCP Streamable HTTP 2025-11-25, tools/list paginato, tools/call JSON/SSE, bearer HTTPS, chiusura sessione; mock HTTP reale. Mancano stdio, OAuth, risorse/prompt e collaudo server terzo |
+| JW-044 | Parziale | Terminale batch tramite worker isolato, coda e approvazioni testate. Mancano PTY e integrazione desktop originale; esecuzione Docker worker da collaudare |
+| JW-045 | Da fare | Portare catalogo/pacchetti e strumenti desktop originali con runtime dedicato e confini di sicurezza; non equivalgono alle connessioni MCP |
+| JW-046 | Predisposto | CI GitHub Linux: build Docker, suite, Compose, non-root e persistenza. Aggiornare validazione dopo esito reale |
+
+Prossimo passo concreto: eseguire CI Docker, quindi prova dell'utente sul server per thinking, chiave ricerca, server MCP e worker. Non dichiarare completati gli aspetti desktop non portati.
 
 Questo file è il registro principale del progetto. A ogni ripresa si leggono prima questa roadmap, `AGENTS.md` e `VALIDAZIONE-WEB.md`. Le attività mantengono il loro ID tra una release e l'altra. Le date delle versioni future non sono ancora fissate.
 

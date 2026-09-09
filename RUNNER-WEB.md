@@ -1,6 +1,6 @@
 # Runner opzionale — test isolati
 
-Il modello non ha un terminale. L'utente sceglie una ricetta in **Strumenti progetto → Test isolati**, legge la conferma e approva. Il server registra il job. Un worker separato sul server Docker lo acquisisce con un lease monouso e restituisce il risultato.
+L'utente sceglie una ricetta in **Strumenti progetto → Test isolati**, legge la conferma e approva. Dalla 0.6, installando **Terminale** nel catalogo plugin, può anche inviare un comando shell dalla GUI o approvare quello proposto dal modello. Il server registra il job. Un worker separato sul server Docker lo acquisisce con un lease monouso e restituisce il risultato.
 
 Il container web **non riceve il Docker socket**. Il worker è un componente fidato sull'host che dispone di Docker: proteggerne token e account come l'accesso al servizio. Usare un host dedicato per codice non fidato; l'isolamento container non equivale a una macchina virtuale.
 
@@ -33,6 +33,7 @@ Per un servizio persistente configurare questi valori in un file ambiente protet
 
 - **Node test:** `node --test` nella copia del progetto. Non installa dipendenze.
 - **Python compile:** `python -m compileall -q .`; verifica la compilazione, non è una suite di test applicativi.
+- **Terminale 0.6:** `sh -c` nella stessa copia temporanea, immagine Node 24, massimo 4000 caratteri per comando. Output disponibile a fine job con **Aggiorna**. Nessun PTY, stdin interattivo, rete o ritorno automatico delle modifiche al workspace. Non è il terminale desktop originale.
 - Workspace montato in sola lettura e copiato in `/tmp/project`; le scritture restano temporanee.
 - Nessuna rete, utente 1000, filesystem container read-only, capability rimosse e no-new-privileges.
 - 1 CPU, 512 MiB RAM, 64 processi, 128 MiB temporanei, 55 secondi nel container / 60 secondi nel worker, 32000 byte di output.

@@ -1,8 +1,21 @@
-# Jenny Web 0.5.0 — Ollama workbench IT/EN
+# Jenny Web 0.6.0 — Web, plugin e MCP IT/EN
 
 Webapp di coding per Linux/Docker, derivata da [Jenny di SaltyPretz3l](https://github.com/SaltyPretz3l/jenny). Chat, workspace, editor e agente con approvazioni. Il runtime non usa Electron, VNC, Python o dipendenze npm esterne.
 
 **Questa release privilegia Ollama.** L'API OpenAI-compatible rimane disponibile per LocalAI e altri server.
+
+## Novità 0.6
+
+La chat mostra subito l'attesa del modello, poi thinking (se trasmesso da Ollama) e scrittura, con tempo trascorso. **Plugin, Web e Terminale** apre il catalogo locale: installazione, attivazione, disattivazione e rimozione delle integrazioni.
+
+- **Web:** lettura testuale di URL pubblici e navigazione dei link, senza eseguire JavaScript. Ricerca con Brave Search: installa Web e salva la tua API key nel pannello. Senza chiave si tenta DuckDuckGo HTML, che può bloccare richieste automatiche; non è garantito. La chiave non viene restituita al browser o al modello.
+- **MCP:** aggiungi nome, URL Streamable HTTP e, se necessario, bearer token (solo HTTPS). Protocollo supportato: 2025-11-25; discovery e chiamata degli strumenti, anche con risposte SSE. Gli endpoint LAN richiedono consenso esplicito. OAuth, stdio, risorse e prompt MCP non sono implementati.
+- **Terminale:** comandi batch approvati, eseguiti dal worker Docker separato nella copia temporanea del workspace, senza rete e senza modificare l'originale. Installare il plugin non avvia il worker: seguire `RUNNER-WEB.md`. Non è un terminale interattivo PTY.
+- Il modello vede solo le integrazioni abilitate, con **Agente** acceso. Ogni chiamata esterna richiede revisione e approvazione; il contenuto remoto è contrassegnato come non fidato. Disabilitare un plugin impedisce le nuove esecuzioni ma non annulla azioni già inviate.
+
+Il catalogo non è il marketplace desktop: i pacchetti/plugin Electron originali e il controllo del desktop non sono ancora portati. I tool filesystem originali già integrati restano disponibili. Questa release non realizza ancora la parità completa con Jenny desktop.
+
+Configurazione e credenziali dei plugin sono in `/data/extensions.json`: proteggere volume e backup, che possono contenerle in chiaro. Applicazione per un solo utente fidato; il token d'accesso rimane necessario. Dettagli e stato delle prove in `RELEASE-WEB-0.6.0.md` e `VALIDAZIONE-WEB.md`.
 
 ## Avvio rapido: Ollama che hai già
 
@@ -46,7 +59,7 @@ Sono implementati i 14 interventi della tranche: contesto limitato, chat archivi
 - **Chat archiviate** mantiene i dati e impedisce nuovi invii finché non ripristini la chat. La ricerca comprende titolo e contenuto; l'export non cancella nulla.
 - **Modifiche multifile:** il modello può proporre fino a 8 file, 256 KiB complessivi. Confrontali e seleziona quelli da applicare. Il salvataggio è sequenziale: ogni file può riuscire, essere rifiutato o andare in conflitto. I risultati restano nella chat; non esiste un rollback automatico del gruppo.
 - **Git** offre stato, diff, staging e cronologia. Non esegue fetch/push/hook. Richiede un repository `.git` ordinario; linked worktree, include di configurazione e object alternates non sono supportati.
-- **Test isolati** richiede il worker separato descritto in `RUNNER-WEB.md`. Nessun Docker socket nel server web e nessun terminale al modello.
+- **Test isolati** richiede il worker separato descritto in `RUNNER-WEB.md`. Nessun Docker socket nel server web; dalla 0.6 il plugin Terminale aggiunge comandi approvati.
 - **Backup completo** e downgrade: `BACKUP-WEB.md`. L'export dal browser contiene le chat; l'utility offline include anche workspace e cronologia file.
 
 Per aggiornare: fare prima un backup a Jenny fermo. La migrazione importa i vecchi JSON in SQLite una sola volta e li conserva. **Serve Node 24**; anche il Dockerfile passa a Node 24 e include Git. Un solo processo per directory dati, protetto da lock nell'entrypoint.

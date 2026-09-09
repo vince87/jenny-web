@@ -73,6 +73,7 @@ async function setup(t, responder) {
     for (const c of app.agent.controllers.values()) c.abort();
     await close(app.server);
     await close(llm);
+    app.agent.store.close();
     await fs.rm(dir, { recursive: true, force: true });
   });
   const chat = async (content) => {
@@ -89,6 +90,24 @@ const tool = (name, args, id = "call-1") => ({
   function: { name, arguments: JSON.stringify(args) },
 });
 const finish = { role: "assistant", content: "Operazione conclusa." };
+test('Extensions HTTP requires authentication and confirmation; agent approval is single use and revocable',async t=>{
+ const x=await setup(t,async(_,n)=>n===1?{role:'assistant',tool_calls:[tool('terminal_run',{command:'printf test'})]}:finish);
+ assert.equal((await x.api('/api/extensions',undefined,{Authorization:'Bearer invalid'})).status,401);
+ assert.equal((await x.api('/api/extensions/install',{kind:'terminal'})).status,400);
+ assert.equal((await x.api('/api/extensions/install',{kind:'terminal',confirmed:true})).status,201);
+ const id=await x.chat('Run a command');const pending=await x.wait(id,'waiting');
+ assert.equal(pending.pending.extension,'terminal_run');assert.equal((await x.api('/api/runner')).body.jobs.length,0);
+ await x.api('/api/extensions/manage',{id:'terminal',action:'disable'});
+ await x.api('/api/sessions/'+id+'/approval',{id:pending.pending.id,allowed:true});
+ const done=await x.wait(id,'idle');assert.match(done.messages.find(m=>m.role==='tool').content,/disabled/);
+ assert.equal((await x.api('/api/runner')).body.jobs.length,0);
+ assert.equal((await x.api('/api/sessions/'+id+'/approval',{id:pending.pending.id,allowed:true})).status,400);
+});
+test('Extension rejection never creates a job',async t=>{
+ const x=await setup(t,async(_,n)=>n===1?{role:'assistant',tool_calls:[tool('terminal_run',{command:'printf test'})]}:finish);
+ await x.api('/api/extensions/install',{kind:'terminal',confirmed:true});const id=await x.chat('Run');const pending=await x.wait(id,'waiting');
+ await x.api('/api/sessions/'+id+'/approval',{id:pending.pending.id,allowed:false});await x.wait(id,'idle');assert.equal((await x.api('/api/runner')).body.jobs.length,0);
+});
 test("HTTP: pagina reale, asset, health, autenticazione e origini", async (t) => {
   const x = await setup(t, async () => finish);
   const r = await fetch(x.base);
@@ -126,7 +145,7 @@ test("HTTP: pagina reale, asset, health, autenticazione e origini", async (t) =>
     415,
   );
   assert.deepEqual((await x.api("/api/models")).body.models, ["local-test"]);
-  assert.equal((await x.api("/api/config")).body.version, "0.5.0");
+  assert.equal((await x.api("/api/config")).body.version, "0.6.0");
 });
 test("File: creazione, lettura, modifica, conflitto e separazione workspace", async (t) => {
   const { api } = await setup(t, async () => finish);
@@ -183,6 +202,7 @@ test("File: creazione, lettura, modifica, conflitto e separazione workspace", as
   );
 });
 test("Confini filesystem: traversal, .git, symlink, binari, limite dimensioni", async (t) => {
+  if(process.platform==='win32'){t.skip('POSIX symlinks: run in Linux Docker CI.');return;}
   const { api, dir } = await setup(t, async () => finish);
   await fs.writeFile(path.join(dir, "secret"), "segreto");
   await fs.symlink(
@@ -426,6 +446,7 @@ test("Persistenza: conversazioni e approvazioni recuperate senza eseguire scritt
     (await x.api("/api/file?workspace=principale&path=later.txt")).status,
     400,
   );
+  reopened.agent.store.close();
 });
 test("Riavvio durante un turno: marca errore e chiude i tool senza ripeterli", async (t) => {
   const x = await setup(t, async () => finish);
@@ -443,6 +464,7 @@ test("Riavvio durante un turno: marca errore e chiude i tool senza ripeterli", a
   assert.equal(repaired.status, "error");
   assert.equal(repaired.messages.at(-1).role, "tool");
   assert.equal(repaired.pending, null);
+  reopened.agent.store.close();
 });
 test("Stop durante la richiesta LLM abortisce il turno senza scrivere file", async (t) => {
   const x = await setup(t, async () => {

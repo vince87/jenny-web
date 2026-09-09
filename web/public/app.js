@@ -136,6 +136,7 @@ function textNode(tag, text, className) {
   return node;
 }
 function render() {
+  paintActivity();
   syncDraft();
   paintWorkbenchState();
   if (workspace) localStorage.setItem("jenny-workspace", workspace);
@@ -189,6 +190,10 @@ function render() {
     $("approvalPath").textContent = p.path;
     $("before").textContent = p.before === null ? t("(Nuovo file)") : p.before;
     $("after").textContent = p.after;
+    if(p.extension) {
+      $("approvalHint").textContent=t('Eseguire questa richiesta esterna? Controlla destinazione e argomenti.');
+      $("unifiedDiff").textContent=JSON.stringify(p.arguments,null,2);
+    }
   }
   $("approve").disabled = session?.status !== "waiting";
   $("deny").disabled = session?.status !== "waiting";
@@ -209,6 +214,9 @@ function render() {
   }
   area.replaceChildren();
   for (const m of session.messages) {
+    if (m.thinking) {
+      const details=document.createElement('details');details.append(textNode('summary',t('Thinking del modello')),textNode('pre',m.thinking));area.append(details);
+    }
     if (m.role === "tool") {
       const box = textNode("div", "", "tool-event");
       const detail = document.createElement("details");
@@ -363,6 +371,7 @@ $("composer").onsubmit = act(async (e) => {
   const content = $("prompt").value.trim();
   if (!content || sending) return;
   sending = true;
+  paintActivity();
   $("prompt").readOnly = true;
   $("send").disabled = true;
   const current = workspace,

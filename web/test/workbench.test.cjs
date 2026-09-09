@@ -109,6 +109,7 @@ test('Legacy downgrade export closes pending tool calls without changing SQLite'
  const again=new SessionStore(data);assert.equal(again.all()[0].status,'waiting');again.close();
 });
 test('Server entrypoint rejects concurrent data use and releases its lock on shutdown',async t=>{
+ if(process.platform==='win32'){t.skip('POSIX SIGTERM lifecycle: run in Linux Docker CI.');return;}
  const {data,w}=await fixture(t);const {spawn}=require('node:child_process');const {once}=require('node:events');
  const env={...process.env,DATA_DIR:data,WORKSPACES_DIR:w.root,PORT:'0',HOST:'127.0.0.1',JENNY_TOKEN:''};
  const child=spawn(process.execPath,[path.join(__dirname,'../server.cjs')],{env,stdio:['ignore','pipe','pipe']});t.after(()=>{if(child.exitCode===null)child.kill('SIGKILL');});

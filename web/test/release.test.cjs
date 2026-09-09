@@ -184,8 +184,9 @@ test("Ollama nativo: opzioni, tools, thinking, metriche e round trip approvazion
     workspaceRoot: path.join(dir, "work"),
     model: "local-coder",
   });
-  t.after(() => fs.rm(dir, { recursive: true, force: true }));
+  t.after(async () => {app.agent.store.close();await fs.rm(dir, { recursive: true, force: true });});
   const s = app.agent.get(app.agent.create("principale").id);
+  const deltas=[];app.agent.subscribe(s.id,event=>{if(event.delta)deltas.push(event);});
   app.agent.send(s, "Crea un file");
   const wait = async (status) => {
     for (let i = 0; i < 200; i++) {
@@ -196,6 +197,7 @@ test("Ollama nativo: opzioni, tools, thinking, metriche e round trip approvazion
     assert.fail("Timeout");
   };
   await wait("waiting");
+  assert.ok(deltas.some(event=>event.partialThinking==='Piano di prova'));
   assert.equal(await app.workspaces.snapshot("principale", "native.txt"), null);
   assert.equal(requests[0].options.num_ctx, 8192);
   assert.equal(requests[0].keep_alive, "10m");

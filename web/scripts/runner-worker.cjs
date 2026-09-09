@@ -8,8 +8,9 @@ const {promisify}=require('node:util');
 const {RECIPES}=require('../runner.cjs');
 const {randomUUID}=require('node:crypto');
 function dockerArgs(root,job,name) {
-  if(!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/.test(job.workspace) || !Object.hasOwn(RECIPES,job.recipe)) throw Error('Invalid job');
-  const recipe=RECIPES[job.recipe];
+  if(!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/.test(job.workspace) || (!Object.hasOwn(RECIPES,job.recipe)&&job.recipe!=='terminal')) throw Error('Invalid job');
+  if(job.recipe==='terminal'&&(typeof job.command!=='string'||!job.command.trim()||job.command.length>4000||job.command.includes('\0')))throw Error('Invalid command');
+  const recipe=job.recipe==='terminal'?{image:'node:24-bookworm-slim',command:['sh','-c',job.command]}:RECIPES[job.recipe];
   if(root.includes(','))throw Error('Unsupported workspace root');
   return ['run','--rm','--pull=never','--name',name,'--network=none','--read-only','--cap-drop=ALL','--security-opt=no-new-privileges','--pids-limit=64','--memory=512m','--memory-swap=512m','--cpus=1','--user=1000:1000','--tmpfs','/tmp:rw,nosuid,nodev,size=128m,mode=1777','--mount',`type=bind,src=${path.join(root,job.workspace)},dst=/source,readonly`,'--workdir=/tmp',recipe.image,'timeout','55s','sh','-c','mkdir /tmp/project && cp -R /source/. /tmp/project/ && cd /tmp/project && exec "$@"','runner',...recipe.command];
 }

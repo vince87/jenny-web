@@ -180,9 +180,11 @@ class OllamaProvider extends LocalProvider {
         throw new Error("Ollama: " + String(frame.error).slice(0, 300));
       if (frame.message?.content) {
         content += frame.message.content;
-        onDelta(content);
       }
-      if (frame.message?.thinking) thinking += frame.message.thinking;
+      if (frame.message?.thinking) {
+        thinking += frame.message.thinking;
+      }
+      if (frame.message?.content || frame.message?.thinking) onDelta(content, thinking);
       if (frame.message?.tool_calls) tools.push(...frame.message.tool_calls);
       if (tools.length > 8)
         throw new Error("Troppi tool nella risposta Ollama.");
