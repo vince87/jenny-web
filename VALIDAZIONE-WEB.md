@@ -4,6 +4,8 @@
 
 ## Validazione precedente 0.6.0
 
+Esito definitivo 0.6.1: [CI Docker 34344372991](https://github.com/vince87/jenny-web/actions/runs/34344372991), revisione `d0fafeb`: **58/58 test superati, zero falliti/esclusi**, build, worker reale, Compose e persistenza riusciti. Anche il nuovo adapter Jenny è stato provato in sola lettura contro il SearXNG dell'utente: 5 risultati normalizzati correttamente. I commit successivi aggiornano solo questa evidenza documentale.
+
 2026-09-09, Windows / Node 24.14.0: **54 test, 52 superati, 2 POSIX esclusi, zero fallimenti**. Test plugin, revoca e approvazioni, MCP HTTP JSON/SSE/paginazione/cleanup, isolamento terminale, protezioni URL e indicatore thinking.
 
 Docker reale su GitHub Actions: build, Compose, health, utente non-root e persistenza dopo riavvio riusciti. Il worker esegue realmente un comando: verifica rete limitata a loopback, sorgenti e root read-only, scritture temporanee senza modifica dell'originale. [Run con smoke test Docker riuscito](https://github.com/vince87/jenny-web/actions/runs/34343068821). Quel run NON verifica la suite: i test erano esclusi dall'immagine. La CI corretta monta esplicitamente i test e ne richiede la presenza; l'esito completo è riportato separatamente sotto.
