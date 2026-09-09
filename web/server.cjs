@@ -53,7 +53,10 @@ async function createApp(options = {}) {
     timeout: options.timeout || Number(process.env.LLM_TIMEOUT_MS || 300000),
   });
   const runner = new RunnerQueue(agent.store);
-  const extensions = new (require('./extensions.cjs').Extensions)(dataDir, runner);
+  const extensions = new (require("./extensions.cjs").Extensions)(
+    dataDir,
+    runner,
+  );
   agent.extensions = extensions;
   const publicDir = path.join(__dirname, "public");
   const allowedOrigins = new Set(
@@ -161,19 +164,34 @@ async function createApp(options = {}) {
           ollama: agent.provider.settings || null,
           model: agent.model,
           baseURL: agent.baseURL,
-          version: require('./package.json').version,
+          version: require("./package.json").version,
           profiles: PROFILES,
           streaming: agent.provider.streaming,
-          tools: [...agent.registry.getToolSchemas(), ...extensions.schemas()].map((t) => t.function.name),
+          tools: [
+            ...agent.registry.getToolSchemas(),
+            ...extensions.schemas(),
+          ].map((t) => t.function.name),
         });
-      if (route === '/api/extensions' && method === 'GET') return json(extensions.list());
-      if (route === '/api/extensions/install' && method === 'POST') return json(extensions.install(body),201);
-      if (route === '/api/extensions/manage' && method === 'POST') return json(extensions.manage(body));
-      if (route === '/api/extensions/web' && method === 'POST') return json(extensions.configureWeb(body));
-      if (route === '/api/extensions/execute' && method === 'POST') {
-        if(body.confirmed!==true)throw Error('Explicit execution confirmation required.');
+      if (route === "/api/extensions" && method === "GET")
+        return json(extensions.list());
+      if (route === "/api/extensions/install" && method === "POST")
+        return json(extensions.install(body), 201);
+      if (route === "/api/extensions/manage" && method === "POST")
+        return json(extensions.manage(body));
+      if (route === "/api/extensions/web" && method === "POST")
+        return json(extensions.configureWeb(body));
+      if (route === "/api/extensions/execute" && method === "POST") {
+        if (body.confirmed !== true)
+          throw Error("Explicit execution confirmation required.");
         await workspaces.service(body.workspace);
-        return json(await extensions.execute(body.name,body.arguments,body.workspace,AbortSignal.timeout(60000)));
+        return json(
+          await extensions.execute(
+            body.name,
+            body.arguments,
+            body.workspace,
+            AbortSignal.timeout(60000),
+          ),
+        );
       }
       if (route === "/api/provider-status" && method === "GET")
         return json(
@@ -182,24 +200,64 @@ async function createApp(options = {}) {
             : { provider: "openai" },
         );
       if (route === "/api/export-chats" && method === "GET")
-        return json({format:"jenny-chats",version:1,sessions:agent.store.all(),exportedAt:new Date().toISOString()});
+        return json({
+          format: "jenny-chats",
+          version: 1,
+          sessions: agent.store.all(),
+          exportedAt: new Date().toISOString(),
+        });
       if (route === "/api/git" && method === "GET")
-        return json(await gitRead(workspaces,url.searchParams.get("workspace"),url.searchParams.get("action") || "status"));
-      if (route === "/api/runner" && method === "GET") return json({jobs:runner.list()});
+        return json(
+          await gitRead(
+            workspaces,
+            url.searchParams.get("workspace"),
+            url.searchParams.get("action") || "status",
+          ),
+        );
+      if (route === "/api/runner" && method === "GET")
+        return json({ jobs: runner.list() });
       if (route === "/api/runner" && method === "POST") {
         await workspaces.service(body.workspace);
-        return json(runner.create(body.workspace,body.recipe,body.confirmed),201);
+        return json(
+          runner.create(body.workspace, body.recipe, body.confirmed),
+          201,
+        );
       }
-      if (route === "/api/runner/cancel" && method === "POST") return json(runner.cancel(body.id));
-      if (route === "/api/runner/claim" && method === "POST") return json({job:runner.claim()});
-      if (route === "/api/runner/complete" && method === "POST") return json(runner.complete(body.id,body.lease,body));
+      if (route === "/api/runner/cancel" && method === "POST")
+        return json(runner.cancel(body.id));
+      if (route === "/api/runner/claim" && method === "POST")
+        return json({ job: runner.claim() });
+      if (route === "/api/runner/complete" && method === "POST")
+        return json(runner.complete(body.id, body.lease, body));
       if (route === "/api/diagnostics" && method === "GET")
-        return json(await diagnose(agent,workspaces,dataDir,url.searchParams.get("model") || agent.model));
+        return json(
+          await diagnose(
+            agent,
+            workspaces,
+            dataDir,
+            url.searchParams.get("model") || agent.model,
+          ),
+        );
       if (route === "/api/instructions" && method === "GET")
-        return json(await workspaces.instructions(url.searchParams.get("workspace")) || {content:"",revision:null,path:"JENNY.md"});
+        return json(
+          (await workspaces.instructions(
+            url.searchParams.get("workspace"),
+          )) || { content: "", revision: null, path: "JENNY.md" },
+        );
       if (route === "/api/instructions" && method === "POST") {
-        if(typeof body.content !== "string" || Array.from(body.content).length > 6000) throw new Error("JENNY.md supera 6000 caratteri.");
-        return json(await workspaces.write(body.workspace,"JENNY.md",body.content,body.revision));
+        if (
+          typeof body.content !== "string" ||
+          Array.from(body.content).length > 6000
+        )
+          throw new Error("JENNY.md supera 6000 caratteri.");
+        return json(
+          await workspaces.write(
+            body.workspace,
+            "JENNY.md",
+            body.content,
+            body.revision,
+          ),
+        );
       }
       if (route === "/api/models" && method === "GET")
         return json({ models: await agent.models() });
@@ -247,7 +305,12 @@ async function createApp(options = {}) {
           ),
         );
       if (route === "/api/sessions" && method === "GET")
-        return json({ sessions: agent.list((url.searchParams.get("q") || "").slice(0,200),url.searchParams.get("archived") === "true") });
+        return json({
+          sessions: agent.list(
+            (url.searchParams.get("q") || "").slice(0, 200),
+            url.searchParams.get("archived") === "true",
+          ),
+        });
       if (route === "/api/sessions" && method === "POST") {
         await workspaces.service(body.workspace);
         return json(agent.create(body.workspace, body.language), 201);
@@ -299,7 +362,7 @@ async function createApp(options = {}) {
         if (!action && method === "GET") return json(agent.view(s));
         if (method === "POST") {
           if (action === "archive") {
-            agent.archive(s,body.archived);
+            agent.archive(s, body.archived);
           } else if (action === "rename") {
             if (
               typeof body.title !== "string" ||
@@ -310,7 +373,7 @@ async function createApp(options = {}) {
             s.title = body.title.trim();
             agent.save(s);
           } else if (action === "message") {
-            const input = await prepareTurn(agent,s,body);
+            const input = await prepareTurn(agent, s, body);
             agent.send(
               s,
               input.content,
@@ -358,18 +421,29 @@ if (require.main === module) {
     process.exit(1);
   }
   let release;
-  require("./backup.cjs").acquire(path.resolve(process.env.DATA_DIR || path.join(__dirname,"../web-data")))
-    .then(unlock => {release=unlock;return createApp();})
+  require("./backup.cjs")
+    .acquire(
+      path.resolve(process.env.DATA_DIR || path.join(__dirname, "../web-data")),
+    )
+    .then((unlock) => {
+      release = unlock;
+      return createApp();
+    })
     .then(({ server, agent }) => {
       server.listen(port, host, () =>
         console.log(`Jenny Web disponibile su http://${host}:${port}`),
       );
-      let shuttingDown=false;
+      let shuttingDown = false;
       const shutdown = () => {
-        if(shuttingDown)return;shuttingDown=true;
+        if (shuttingDown) return;
+        shuttingDown = true;
         for (const c of agent.controllers.values()) c.abort();
         server.close();
-        setTimeout(async () => { agent.store.close(); await release(); process.exit(0); }, 3000);
+        setTimeout(async () => {
+          agent.store.close();
+          await release();
+          process.exit(0);
+        }, 3000);
       };
       process.on("SIGTERM", shutdown);
       process.on("SIGINT", shutdown);

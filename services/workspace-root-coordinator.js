@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
-const crypto = require('crypto');
+const crypto = require("crypto");
 const {
   containsJennyStateDirSegment,
   isJennyStateDirRoot,
   normalizeWorkspaceRootPath,
   workspaceRootId,
-} = require('./workspace-root-identity');
+} = require("./workspace-root-identity");
 
 const DEFAULT_TRANSITION_TTL_MS = 120_000;
 const DEFAULT_MUTATION_DRAIN_TIMEOUT_MS = 30_000;
@@ -15,12 +15,14 @@ const DEFAULT_HOOK_TIMEOUT_MS = 30_000;
 // observed misconfiguration: every consumer appends its own `.jenny/...`
 // suffix onto the configured root, so a root of (or inside) `.jenny` itself
 // materializes a doubled `.jenny/.jenny/...` tree.
-const JENNY_STATE_DIR_ROOT_MESSAGE = 'This folder is Jenny\'s own internal state '
-  + 'directory (.jenny) and can\'t be used as the tools workspace root. Choose the '
-  + 'folder\'s parent directory instead.';
-const JENNY_STATE_DIR_SEGMENT_MESSAGE = 'The selected folder is inside Jenny\'s own '
-  + 'internal state directory (.jenny) and can\'t be used as the tools workspace root. '
-  + 'Choose a folder outside .jenny.';
+const JENNY_STATE_DIR_ROOT_MESSAGE =
+  "This folder is Jenny's own internal state " +
+  "directory (.jenny) and can't be used as the tools workspace root. Choose the " +
+  "folder's parent directory instead.";
+const JENNY_STATE_DIR_SEGMENT_MESSAGE =
+  "The selected folder is inside Jenny's own " +
+  "internal state directory (.jenny) and can't be used as the tools workspace root. " +
+  "Choose a folder outside .jenny.";
 
 function defaultNormalizeRootPath(value) {
   return normalizeWorkspaceRootPath(value);
@@ -31,13 +33,14 @@ function defaultRootIdFactory(rootPath) {
 }
 
 function freezeContext(context) {
-  const phase = context.phase === 'transitioning'
-    ? 'transitioning'
-    : context.phase === 'error'
-      ? 'error'
-      : 'ready';
+  const phase =
+    context.phase === "transitioning"
+      ? "transitioning"
+      : context.phase === "error"
+        ? "error"
+        : "ready";
   return Object.freeze({
-    rootPath: String(context.rootPath || ''),
+    rootPath: String(context.rootPath || ""),
     rootId: context.rootId == null ? null : String(context.rootId),
     generation: Number(context.generation) || 0,
     phase,
@@ -45,39 +48,42 @@ function freezeContext(context) {
 }
 
 function safeErrorCode(error) {
-  const candidate = String(error && error.code || '').trim();
+  const candidate = String((error && error.code) || "").trim();
   return /^[A-Za-z0-9_-]{1,64}$/.test(candidate)
     ? candidate
-    : 'workspace_root_transition_failed';
+    : "workspace_root_transition_failed";
 }
 
 function stageMessage(stage) {
-  return {
-    stop: 'Workspace root services could not be stopped.',
-    persistence: 'Workspace root persistence failed.',
-    refresh: 'Managed runtime root refresh failed.',
-    participants: 'A workspace root participant failed to commit.',
-    start: 'Workspace root services could not be started.',
-  }[stage] || 'Workspace root transition failed.';
+  return (
+    {
+      stop: "Workspace root services could not be stopped.",
+      persistence: "Workspace root persistence failed.",
+      refresh: "Managed runtime root refresh failed.",
+      participants: "A workspace root participant failed to commit.",
+      start: "Workspace root services could not be started.",
+    }[stage] || "Workspace root transition failed."
+  );
 }
 
 function normalizeBlocker(participantId, blocker) {
   if (!blocker) return null;
-  const reason = typeof blocker === 'string'
-    ? blocker
-    : String(blocker.reason || blocker.code || 'participant_active');
+  const reason =
+    typeof blocker === "string"
+      ? blocker
+      : String(blocker.reason || blocker.code || "participant_active");
   return {
     id: participantId,
-    reason: reason.trim().slice(0, 80) || 'participant_active',
+    reason: reason.trim().slice(0, 80) || "participant_active",
   };
 }
 
 class WorkspaceRootCoordinator {
   constructor({
-    initialRootPath = '',
+    initialRootPath = "",
     normalizeRootPath = defaultNormalizeRootPath,
     rootIdFactory = defaultRootIdFactory,
-    chooseTarget = async () => ({ canceled: true, path: '' }),
+    chooseTarget = async () => ({ canceled: true, path: "" }),
     applyRootPath = async () => {},
     restoreRootPath = async () => {},
     refreshManagedRoot = async () => {},
@@ -102,12 +108,18 @@ class WorkspaceRootCoordinator {
     this._startRootServices = startRootServices;
     this._transitionIdFactory = transitionIdFactory;
     this._operationIdFactory = operationIdFactory;
-    this._transitionTtlMs = Math.max(1, Number(transitionTtlMs) || DEFAULT_TRANSITION_TTL_MS);
+    this._transitionTtlMs = Math.max(
+      1,
+      Number(transitionTtlMs) || DEFAULT_TRANSITION_TTL_MS,
+    );
     this._mutationDrainTimeoutMs = Math.max(
       1,
-      Number(mutationDrainTimeoutMs) || DEFAULT_MUTATION_DRAIN_TIMEOUT_MS
+      Number(mutationDrainTimeoutMs) || DEFAULT_MUTATION_DRAIN_TIMEOUT_MS,
     );
-    this._hookTimeoutMs = Math.max(1, Number(hookTimeoutMs) || DEFAULT_HOOK_TIMEOUT_MS);
+    this._hookTimeoutMs = Math.max(
+      1,
+      Number(hookTimeoutMs) || DEFAULT_HOOK_TIMEOUT_MS,
+    );
     this._setTimeout = setTimeoutImpl;
     this._clearTimeout = clearTimeoutImpl;
     this._logger = logger;
@@ -117,7 +129,7 @@ class WorkspaceRootCoordinator {
       rootPath,
       rootId: this._rootIdFactory(rootPath),
       generation: 0,
-      phase: 'ready',
+      phase: "ready",
     };
     this._transition = null;
     this._transitionTimer = null;
@@ -135,21 +147,26 @@ class WorkspaceRootCoordinator {
   }
 
   isCurrent(context) {
-    if (!context || this._state.phase !== 'ready') return false;
-    return context.rootId === this._state.rootId
-      && Number(context.generation) === this._state.generation;
+    if (!context || this._state.phase !== "ready") return false;
+    return (
+      context.rootId === this._state.rootId &&
+      Number(context.generation) === this._state.generation
+    );
   }
 
-  acquireOperation({ kind = 'read', cancellable = true } = {}) {
+  acquireOperation({ kind = "read", cancellable = true } = {}) {
     const context = this.captureContext();
-    if (this._state.phase !== 'ready') {
+    if (this._state.phase !== "ready") {
       return {
         acquired: false,
-        code: this._state.phase === 'error' ? 'root_recovery_required' : 'root_transitioning',
+        code:
+          this._state.phase === "error"
+            ? "root_recovery_required"
+            : "root_transitioning",
         context,
       };
     }
-    const normalizedKind = kind === 'mutation' ? 'mutation' : 'read';
+    const normalizedKind = kind === "mutation" ? "mutation" : "read";
     const operationId = String(this._operationIdFactory());
     const abortController = new AbortController();
     let released = false;
@@ -166,7 +183,8 @@ class WorkspaceRootCoordinator {
       if (released) return false;
       released = true;
       this._operations.delete(operationId);
-      if (normalizedKind === 'mutation') this._resolveMutationWaitersIfDrained();
+      if (normalizedKind === "mutation")
+        this._resolveMutationWaitersIfDrained();
       return true;
     };
     return {
@@ -175,41 +193,45 @@ class WorkspaceRootCoordinator {
       context,
       signal: abortController.signal,
       release,
-      isCurrent: () => !released && (
-        normalizedKind === 'mutation'
+      isCurrent: () =>
+        !released &&
+        (normalizedKind === "mutation"
           ? this._isMutationContextCurrent(context)
-          : this.isCurrent(context)
-      ),
+          : this.isCurrent(context)),
     };
   }
 
   registerParticipant(participant) {
-    const id = String(participant && participant.id || '').trim();
-    if (!id) throw new TypeError('workspace root participant id is required');
+    const id = String((participant && participant.id) || "").trim();
+    if (!id) throw new TypeError("workspace root participant id is required");
     if (this._participants.has(id)) {
       throw new Error(`workspace root participant already registered: ${id}`);
     }
     const normalized = { ...participant, id };
     this._participants.set(id, normalized);
-    return () => this._participants.get(id) === normalized && this._participants.delete(id);
+    return () =>
+      this._participants.get(id) === normalized &&
+      this._participants.delete(id);
   }
 
   async prepareChoose(options = {}) {
     if (this._selectionInFlight || this._transition) {
-      return this._prepareBlocked('transition_in_progress');
+      return this._prepareBlocked("transition_in_progress");
     }
     this._selectionInFlight = true;
     let selected;
     try {
       selected = await this._chooseTarget(options);
     } catch (error) {
-      this._log('warn', 'workspace_root.choose_failed', { code: safeErrorCode(error) });
+      this._log("warn", "workspace_root.choose_failed", {
+        code: safeErrorCode(error),
+      });
       return {
         prepared: false,
         canceled: false,
         changed: false,
         blocked: true,
-        code: 'target_selection_failed',
+        code: "target_selection_failed",
         context: this.captureContext(),
       };
     } finally {
@@ -229,8 +251,8 @@ class WorkspaceRootCoordinator {
     // interactive selection, not the trusted prepareTarget entrypoint (e.g.
     // worktree roots) or prepareClear.
     if (containsJennyStateDirSegment(this._normalizeRootPath(selected.path))) {
-      this._log('warn', 'workspace_root.state_dir_segment_rejected', {});
-      return this._prepareBlocked('workspace_root_inside_state_dir', {
+      this._log("warn", "workspace_root.state_dir_segment_rejected", {});
+      return this._prepareBlocked("workspace_root_inside_state_dir", {
         message: JENNY_STATE_DIR_SEGMENT_MESSAGE,
       });
     }
@@ -239,9 +261,9 @@ class WorkspaceRootCoordinator {
 
   async prepareClear() {
     if (this._selectionInFlight || this._transition) {
-      return this._prepareBlocked('transition_in_progress');
+      return this._prepareBlocked("transition_in_progress");
     }
-    return this._prepareTarget('');
+    return this._prepareTarget("");
   }
 
   // Trusted main-process services (worktree selection, setup reset) use this
@@ -249,15 +271,15 @@ class WorkspaceRootCoordinator {
   // renderer-originated selection must go through prepareChoose/prepareClear.
   async prepareTarget(rootPath) {
     if (this._selectionInFlight || this._transition) {
-      return this._prepareBlocked('transition_in_progress');
+      return this._prepareBlocked("transition_in_progress");
     }
     return this._prepareTarget(rootPath);
   }
 
   cancel({ transitionId } = {}) {
     const transition = this._matchingTransition(transitionId);
-    if (!transition) return this._cancelRefused('transition_not_found');
-    if (this._commitInFlight) return this._cancelRefused('commit_in_progress');
+    if (!transition) return this._cancelRefused("transition_not_found");
+    if (this._commitInFlight) return this._cancelRefused("commit_in_progress");
     this._finishTransitionAt(transition.previous);
     return {
       canceled: true,
@@ -268,37 +290,41 @@ class WorkspaceRootCoordinator {
 
   commit({ transitionId, terminateProcesses = false } = {}) {
     if (this._commitInFlight) {
-      if (String(transitionId || '') === this._commitTransitionId) return this._commitInFlight;
-      return Promise.resolve(this._commitRefused('commit_in_progress'));
+      if (String(transitionId || "") === this._commitTransitionId)
+        return this._commitInFlight;
+      return Promise.resolve(this._commitRefused("commit_in_progress"));
     }
     const transition = this._matchingTransition(transitionId);
-    if (!transition) return Promise.resolve(this._commitRefused('transition_not_found'));
+    if (!transition)
+      return Promise.resolve(this._commitRefused("transition_not_found"));
 
     this._clearTransitionTimer();
     this._commitTransitionId = transition.id;
-    this._commitInFlight = this._commitPreparedTransition(transition, terminateProcesses)
-      .finally(() => {
-        this._commitInFlight = null;
-        this._commitTransitionId = null;
-      });
+    this._commitInFlight = this._commitPreparedTransition(
+      transition,
+      terminateProcesses,
+    ).finally(() => {
+      this._commitInFlight = null;
+      this._commitTransitionId = null;
+    });
     return this._commitInFlight;
   }
 
   _prepareTarget(targetValue) {
-    if (this._transition) return this._prepareBlocked('transition_in_progress');
+    if (this._transition) return this._prepareBlocked("transition_in_progress");
     const rootPath = this._normalizeRootPath(targetValue);
     // Universal seam: every set-root path (prepareChoose, prepareClear, and
     // the trusted direct prepareTarget entrypoint) converges here. A root
     // whose final segment is .jenny is rejected regardless of entrypoint;
     // rootPath is empty for prepareClear, which is never rejected.
     if (rootPath && isJennyStateDirRoot(rootPath)) {
-      this._log('warn', 'workspace_root.state_dir_root_rejected', {});
-      return this._prepareBlocked('workspace_root_is_state_dir', {
+      this._log("warn", "workspace_root.state_dir_root_rejected", {});
+      return this._prepareBlocked("workspace_root_is_state_dir", {
         message: JENNY_STATE_DIR_ROOT_MESSAGE,
       });
     }
     const rootId = this._rootIdFactory(rootPath);
-    if (rootId === this._state.rootId && this._state.phase === 'ready') {
+    if (rootId === this._state.rootId && this._state.phase === "ready") {
       return {
         prepared: false,
         canceled: false,
@@ -310,7 +336,12 @@ class WorkspaceRootCoordinator {
 
     const previous = freezeContext(this._state);
     const generation = this._state.generation + 1;
-    const candidate = freezeContext({ rootPath, rootId, generation, phase: 'transitioning' });
+    const candidate = freezeContext({
+      rootPath,
+      rootId,
+      generation,
+      phase: "transitioning",
+    });
     const transition = {
       id: String(this._transitionIdFactory()),
       previous,
@@ -329,29 +360,32 @@ class WorkspaceRootCoordinator {
   }
 
   _beginTransition(transition) {
-    if (this._state.phase === 'transitioning') return;
+    if (this._state.phase === "transitioning") return;
     this._state = {
       rootPath: transition.previous.rootPath,
       rootId: transition.previous.rootId,
       generation: transition.candidate.generation,
-      phase: 'transitioning',
+      phase: "transitioning",
     };
     this._abortCancellableOperations();
   }
 
   async _commitPreparedTransition(transition, terminateProcesses) {
-    let readiness = await this._ensureParticipantsReady(transition, terminateProcesses);
+    let readiness = await this._ensureParticipantsReady(
+      transition,
+      terminateProcesses,
+    );
     if (!readiness.ready) return readiness.result;
     this._beginTransition(transition);
 
-    if (!await this._waitForMutationDrain()) {
+    if (!(await this._waitForMutationDrain())) {
       this._armTransitionTimer(transition.id);
       const blockers = this._activeMutationBlockers();
-      this._log('warn', 'workspace_root.mutation_drain_timed_out', {
+      this._log("warn", "workspace_root.mutation_drain_timed_out", {
         activeCount: this._countMutationOperations(),
         reportedCount: blockers.length,
       });
-      return this._commitRefused('mutations_active', {
+      return this._commitRefused("mutations_active", {
         blocked: true,
         blockers,
       });
@@ -360,33 +394,36 @@ class WorkspaceRootCoordinator {
     // A process can become active while an older mutation is draining. Recheck
     // immediately before stopping services and changing persistence so a late
     // terminal, PTY, or test run cannot escape the transition barrier.
-    readiness = await this._ensureParticipantsReady(transition, terminateProcesses);
+    readiness = await this._ensureParticipantsReady(
+      transition,
+      terminateProcesses,
+    );
     if (!readiness.ready) return readiness.result;
 
-    let stage = 'stop';
+    let stage = "stop";
     try {
-      await this._runTransactionStep(() => this._stopRootServices(
-        this._previousContext(transition, 'commit')
-      ));
-      stage = 'persistence';
-      await this._runTransactionStep(() => this._applyRootPath(
-        this._candidateContext(transition, 'commit')
-      ));
-      stage = 'refresh';
-      await this._runTransactionStep(() => this._refreshManagedRoot(
-        this._candidateContext(transition, 'commit')
-      ));
-      stage = 'participants';
-      await this._notifyParticipants('onCommitted', transition, 'commit');
-      stage = 'start';
-      await this._runTransactionStep(() => this._startRootServices(
-        this._candidateContext(transition, 'commit')
-      ));
+      await this._runTransactionStep(() =>
+        this._stopRootServices(this._previousContext(transition, "commit")),
+      );
+      stage = "persistence";
+      await this._runTransactionStep(() =>
+        this._applyRootPath(this._candidateContext(transition, "commit")),
+      );
+      stage = "refresh";
+      await this._runTransactionStep(() =>
+        this._refreshManagedRoot(this._candidateContext(transition, "commit")),
+      );
+      stage = "participants";
+      await this._notifyParticipants("onCommitted", transition, "commit");
+      stage = "start";
+      await this._runTransactionStep(() =>
+        this._startRootServices(this._candidateContext(transition, "commit")),
+      );
     } catch (error) {
       return this._rollbackTransition(transition, stage, error);
     }
 
-    this._finishTransitionAt(transition.candidate, 'ready');
+    this._finishTransitionAt(transition.candidate, "ready");
     return {
       committed: true,
       changed: true,
@@ -399,42 +436,54 @@ class WorkspaceRootCoordinator {
   async _rollbackTransition(transition, stage, error) {
     const rollbackErrors = [];
     if (error && error.uncertain === true) {
-      rollbackErrors.push({ stage: `uncertain:${stage}`, code: safeErrorCode(error) });
+      rollbackErrors.push({
+        stage: `uncertain:${stage}`,
+        code: safeErrorCode(error),
+      });
     }
     const attempt = async (rollbackStage, callback) => {
       try {
         await this._runTransactionStep(callback);
       } catch (rollbackError) {
-        rollbackErrors.push({ stage: rollbackStage, code: safeErrorCode(rollbackError) });
+        rollbackErrors.push({
+          stage: rollbackStage,
+          code: safeErrorCode(rollbackError),
+        });
       }
     };
     // startRootServices(candidate) can perform visible work before rejecting.
     // Stop that partially-started target before restoring persistence and
     // restarting the previous root, otherwise both roots can remain live.
-    await attempt('stop', () => this._stopRootServices(
-      this._candidateContext(transition, 'rollback_cleanup')
-    ));
-    await attempt('restore', () => this._restoreRootPath(
-      this._previousContext(transition, 'rollback')
-    ));
-    await attempt('refresh', () => this._refreshManagedRoot(
-      this._previousContext(transition, 'rollback')
-    ));
-    rollbackErrors.push(...await this._notifyParticipantsIsolated(
-      'onRolledBack', transition, 'rollback'
-    ));
-    await attempt('start', () => this._startRootServices(
-      this._previousContext(transition, 'rollback')
-    ));
+    await attempt("stop", () =>
+      this._stopRootServices(
+        this._candidateContext(transition, "rollback_cleanup"),
+      ),
+    );
+    await attempt("restore", () =>
+      this._restoreRootPath(this._previousContext(transition, "rollback")),
+    );
+    await attempt("refresh", () =>
+      this._refreshManagedRoot(this._previousContext(transition, "rollback")),
+    );
+    rollbackErrors.push(
+      ...(await this._notifyParticipantsIsolated(
+        "onRolledBack",
+        transition,
+        "rollback",
+      )),
+    );
+    await attempt("start", () =>
+      this._startRootServices(this._previousContext(transition, "rollback")),
+    );
     this._finishTransitionAt(
       transition.previous,
-      rollbackErrors.length > 0 ? 'error' : transition.previous.phase
+      rollbackErrors.length > 0 ? "error" : transition.previous.phase,
     );
     const result = {
       committed: false,
       changed: false,
       rolledBack: true,
-      code: 'commit_failed',
+      code: "commit_failed",
       stage,
       error: { code: safeErrorCode(error), message: stageMessage(stage) },
       context: this.captureContext(),
@@ -443,7 +492,7 @@ class WorkspaceRootCoordinator {
       result.rollbackIncomplete = true;
       result.rollbackErrors = rollbackErrors;
     }
-    this._log('warn', 'workspace_root.commit_rolled_back', {
+    this._log("warn", "workspace_root.commit_rolled_back", {
       stage,
       code: result.error.code,
       rollbackIncomplete: result.rollbackIncomplete === true,
@@ -454,23 +503,24 @@ class WorkspaceRootCoordinator {
   async _collectBlockers(transition) {
     const blockers = [];
     for (const participant of this._participants.values()) {
-      if (typeof participant.getBlocker !== 'function') continue;
+      if (typeof participant.getBlocker !== "function") continue;
       try {
         const blocker = normalizeBlocker(
           participant.id,
-          await this._runBounded(`participant_check:${participant.id}`, () => (
-            participant.getBlocker(this._hookContext(transition, 'check'))
-          ))
+          await this._runBounded(`participant_check:${participant.id}`, () =>
+            participant.getBlocker(this._hookContext(transition, "check")),
+          ),
         );
         if (blocker) blockers.push(blocker);
       } catch (error) {
         blockers.push({
           id: participant.id,
-          reason: error && error.uncertain === true
-            ? 'participant_check_timeout'
-            : 'participant_check_failed',
+          reason:
+            error && error.uncertain === true
+              ? "participant_check_timeout"
+              : "participant_check_failed",
         });
-        this._log('warn', 'workspace_root.participant_check_failed', {
+        this._log("warn", "workspace_root.participant_check_failed", {
           participantId: participant.id,
           code: safeErrorCode(error),
         });
@@ -486,12 +536,15 @@ class WorkspaceRootCoordinator {
       this._armTransitionTimer(transition.id);
       return { ready: false, result: this._participantsBlocked(blockers) };
     }
-    const terminationFailure = await this._terminateBlockers(blockers, transition);
+    const terminationFailure = await this._terminateBlockers(
+      blockers,
+      transition,
+    );
     if (terminationFailure) {
       this._armTransitionTimer(transition.id);
       return {
         ready: false,
-        result: this._commitRefused('participant_termination_failed', {
+        result: this._commitRefused("participant_termination_failed", {
           blocked: true,
           blockers: [terminationFailure],
         }),
@@ -508,17 +561,18 @@ class WorkspaceRootCoordinator {
   async _terminateBlockers(blockers, transition) {
     for (const blocker of blockers) {
       const participant = this._participants.get(blocker.id);
-      if (!participant || typeof participant.terminate !== 'function') return blocker;
+      if (!participant || typeof participant.terminate !== "function")
+        return blocker;
       try {
-        await this._runBounded(`participant_terminate:${participant.id}`, () => (
-          participant.terminate(this._hookContext(transition, 'terminate'))
-        ));
+        await this._runBounded(`participant_terminate:${participant.id}`, () =>
+          participant.terminate(this._hookContext(transition, "terminate")),
+        );
       } catch (error) {
-        this._log('warn', 'workspace_root.participant_termination_failed', {
+        this._log("warn", "workspace_root.participant_termination_failed", {
           participantId: blocker.id,
           code: safeErrorCode(error),
         });
-        return { id: blocker.id, reason: 'termination_failed' };
+        return { id: blocker.id, reason: "termination_failed" };
       }
     }
     return null;
@@ -526,10 +580,10 @@ class WorkspaceRootCoordinator {
 
   async _notifyParticipants(method, transition, reason) {
     for (const participant of this._participants.values()) {
-      if (typeof participant[method] === 'function') {
-        await this._runTransactionStep(() => (
-          participant[method](this._hookContext(transition, reason))
-        ));
+      if (typeof participant[method] === "function") {
+        await this._runTransactionStep(() =>
+          participant[method](this._hookContext(transition, reason)),
+        );
       }
     }
   }
@@ -537,14 +591,17 @@ class WorkspaceRootCoordinator {
   async _notifyParticipantsIsolated(method, transition, reason) {
     const errors = [];
     for (const participant of this._participants.values()) {
-      if (typeof participant[method] !== 'function') continue;
+      if (typeof participant[method] !== "function") continue;
       try {
-        await this._runTransactionStep(() => (
-          participant[method](this._hookContext(transition, reason))
-        ));
+        await this._runTransactionStep(() =>
+          participant[method](this._hookContext(transition, reason)),
+        );
       } catch (error) {
-        errors.push({ stage: `participant:${participant.id}`, code: safeErrorCode(error) });
-        this._log('warn', 'workspace_root.participant_rollback_failed', {
+        errors.push({
+          stage: `participant:${participant.id}`,
+          code: safeErrorCode(error),
+        });
+        this._log("warn", "workspace_root.participant_rollback_failed", {
           participantId: participant.id,
           code: safeErrorCode(error),
         });
@@ -566,7 +623,10 @@ class WorkspaceRootCoordinator {
         resolve(drained);
       };
       const onDrained = () => finish(true);
-      timer = this._setTimeout(() => finish(false), this._mutationDrainTimeoutMs);
+      timer = this._setTimeout(
+        () => finish(false),
+        this._mutationDrainTimeoutMs,
+      );
       this._mutationWaiters.add(onDrained);
       if (!this._hasMutationOperations()) finish(true);
     });
@@ -584,25 +644,27 @@ class WorkspaceRootCoordinator {
   _countMutationOperations() {
     let count = 0;
     for (const operation of this._operations.values()) {
-      if (operation.kind === 'mutation') count += 1;
+      if (operation.kind === "mutation") count += 1;
     }
     return count;
   }
 
   _activeMutationBlockers() {
     return [...this._operations.values()]
-      .filter((operation) => operation.kind === 'mutation')
+      .filter((operation) => operation.kind === "mutation")
       .slice(0, 16)
       .map((operation) => ({
-        id: String(operation.id || '').slice(0, 64) || 'mutation',
-        reason: 'mutation_active',
+        id: String(operation.id || "").slice(0, 64) || "mutation",
+        reason: "mutation_active",
       }));
   }
 
   _isMutationContextCurrent(context) {
-    return this._state.phase !== 'error'
-      && context.rootId === this._state.rootId
-      && context.rootPath === this._state.rootPath;
+    return (
+      this._state.phase !== "error" &&
+      context.rootId === this._state.rootId &&
+      context.rootPath === this._state.rootPath
+    );
   }
 
   _runBounded(stage, callback) {
@@ -610,13 +672,14 @@ class WorkspaceRootCoordinator {
     const timeout = new Promise((_, reject) => {
       timer = this._setTimeout(() => {
         const error = new Error(`Workspace root stage timed out: ${stage}`);
-        error.code = 'workspace_root_stage_timeout';
+        error.code = "workspace_root_stage_timeout";
         error.uncertain = true;
         reject(error);
       }, this._hookTimeoutMs);
     });
-    return Promise.race([Promise.resolve().then(callback), timeout])
-      .finally(() => this._clearTimeout(timer));
+    return Promise.race([Promise.resolve().then(callback), timeout]).finally(
+      () => this._clearTimeout(timer),
+    );
   }
 
   // Transactional stages can mutate persistence, the managed sidecar, or
@@ -631,14 +694,16 @@ class WorkspaceRootCoordinator {
   _abortCancellableOperations() {
     for (const operation of this._operations.values()) {
       if (operation.cancellable && !operation.abortController.signal.aborted) {
-        operation.abortController.abort('workspace_root_transition');
+        operation.abortController.abort("workspace_root_transition");
       }
     }
   }
 
   _matchingTransition(transitionId) {
-    const id = String(transitionId || '');
-    return this._transition && this._transition.id === id ? this._transition : null;
+    const id = String(transitionId || "");
+    return this._transition && this._transition.id === id
+      ? this._transition
+      : null;
   }
 
   _finishTransitionAt(context, phase = context.phase) {
@@ -647,7 +712,7 @@ class WorkspaceRootCoordinator {
       rootPath: context.rootPath,
       rootId: context.rootId,
       generation: this._state.generation,
-      phase: phase === 'error' ? 'error' : 'ready',
+      phase: phase === "error" ? "error" : "ready",
     };
     this._transition = null;
   }
@@ -658,15 +723,16 @@ class WorkspaceRootCoordinator {
     this._transitionTimerToken = timerToken;
     const timer = this._setTimeout(() => {
       if (
-        this._transitionTimerToken !== timerToken
-        || this._commitInFlight
-        || !this._matchingTransition(transitionId)
-      ) return;
+        this._transitionTimerToken !== timerToken ||
+        this._commitInFlight ||
+        !this._matchingTransition(transitionId)
+      )
+        return;
       const transition = this._transition;
       this._finishTransitionAt(transition.previous);
-      this._log('info', 'workspace_root.transition_expired', {});
+      this._log("info", "workspace_root.transition_expired", {});
     }, this._transitionTtlMs);
-    if (typeof timer?.unref === 'function') timer.unref();
+    if (typeof timer?.unref === "function") timer.unref();
     if (this._transitionTimerToken === timerToken) {
       this._transitionTimer = timer;
     } else {
@@ -676,14 +742,15 @@ class WorkspaceRootCoordinator {
 
   _clearTransitionTimer() {
     this._transitionTimerToken = null;
-    if (this._transitionTimer != null) this._clearTimeout(this._transitionTimer);
+    if (this._transitionTimer != null)
+      this._clearTimeout(this._transitionTimer);
     this._transitionTimer = null;
   }
 
   _candidateContext(transition, reason) {
     return {
       ...transition.candidate,
-      phase: 'transitioning',
+      phase: "transitioning",
       transitionId: transition.id,
       reason,
     };
@@ -693,7 +760,7 @@ class WorkspaceRootCoordinator {
     return {
       ...transition.previous,
       generation: this._state.generation,
-      phase: 'transitioning',
+      phase: "transitioning",
       transitionId: transition.id,
       reason,
     };
@@ -721,7 +788,10 @@ class WorkspaceRootCoordinator {
   }
 
   _participantsBlocked(blockers) {
-    return this._commitRefused('participants_active', { blocked: true, blockers });
+    return this._commitRefused("participants_active", {
+      blocked: true,
+      blockers,
+    });
   }
 
   _commitRefused(code, extra = {}) {
@@ -735,11 +805,16 @@ class WorkspaceRootCoordinator {
   }
 
   _cancelRefused(code) {
-    return { canceled: false, changed: false, code, context: this.captureContext() };
+    return {
+      canceled: false,
+      changed: false,
+      code,
+      context: this.captureContext(),
+    };
   }
 
   _log(level, event, details) {
-    if (typeof this._logger !== 'function') return;
+    if (typeof this._logger !== "function") return;
     try {
       this._logger(level, event, details);
     } catch (_error) {

@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 const ENUMERATION_DEFAULTS = Object.freeze({
   maxDirectories: 20000,
@@ -19,16 +19,22 @@ function normalizePositiveInteger(value, fallback, ceiling) {
 }
 
 function cancellationReason({ signal = null, assertCurrent = null } = {}) {
-  if (typeof assertCurrent === 'function') assertCurrent();
-  return signal?.aborted === true ? 'cancelled' : null;
+  if (typeof assertCurrent === "function") assertCurrent();
+  return signal?.aborted === true ? "cancelled" : null;
 }
 
 function isAlreadyClosedDirectoryError(error) {
-  return error?.code === 'ERR_DIR_CLOSED' || error?.code === 'ERR_INVALID_STATE';
+  return (
+    error?.code === "ERR_DIR_CLOSED" || error?.code === "ERR_INVALID_STATE"
+  );
 }
 
-async function* iterateDirectoryEntries(fs, directoryPath, { onCleanupError = null } = {}) {
-  if (typeof fs?.opendir === 'function') {
+async function* iterateDirectoryEntries(
+  fs,
+  directoryPath,
+  { onCleanupError = null } = {},
+) {
+  if (typeof fs?.opendir === "function") {
     const directory = await fs.opendir(directoryPath);
     try {
       for await (const entry of directory) yield entry;
@@ -70,7 +76,7 @@ function buildEnumerationMeta(state, truncationReason = null) {
 
 async function walkWorkspaceFiles({
   fs,
-  initialRelPath = '',
+  initialRelPath = "",
   resolveDirectory,
   onFile,
   shouldSkipDirectory = () => false,
@@ -84,36 +90,42 @@ async function walkWorkspaceFiles({
   now = Date.now,
   onCleanupError = null,
 } = {}) {
-  if (!fs || typeof resolveDirectory !== 'function' || typeof onFile !== 'function') {
-    throw new TypeError('walkWorkspaceFiles requires fs, resolveDirectory, and onFile');
+  if (
+    !fs ||
+    typeof resolveDirectory !== "function" ||
+    typeof onFile !== "function"
+  ) {
+    throw new TypeError(
+      "walkWorkspaceFiles requires fs, resolveDirectory, and onFile",
+    );
   }
   const limits = {
     maxFiles: normalizePositiveInteger(maxFiles, 20000, 50000),
     maxDirectories: normalizePositiveInteger(
       maxDirectories,
       ENUMERATION_DEFAULTS.maxDirectories,
-      ENUMERATION_CEILINGS.maxDirectories
+      ENUMERATION_CEILINGS.maxDirectories,
     ),
     maxEntries: normalizePositiveInteger(
       maxEntries,
       ENUMERATION_DEFAULTS.maxEntries,
-      ENUMERATION_CEILINGS.maxEntries
+      ENUMERATION_CEILINGS.maxEntries,
     ),
     maxDurationMs: normalizePositiveInteger(
       maxDurationMs,
       ENUMERATION_DEFAULTS.maxDurationMs,
-      ENUMERATION_CEILINGS.maxDurationMs
+      ENUMERATION_CEILINGS.maxDurationMs,
     ),
   };
   const state = {
-    now: typeof now === 'function' ? now : Date.now,
+    now: typeof now === "function" ? now : Date.now,
     startedAt: 0,
     filesScanned: 0,
     directoriesScanned: 0,
     entriesScanned: 0,
   };
   state.startedAt = state.now();
-  const queue = [String(initialRelPath || '')];
+  const queue = [String(initialRelPath || "")];
   let queueHead = 0;
   let directoriesQueued = 1;
   let stopReason = null;
@@ -122,13 +134,13 @@ async function walkWorkspaceFiles({
   const checkStop = () => {
     const cancelled = cancellationReason({ signal, assertCurrent });
     if (cancelled) return cancelled;
-    if (state.now() - state.startedAt >= limits.maxDurationMs) return 'time_limit';
-    if (state.entriesScanned >= limits.maxEntries) return 'entry_limit';
+    if (state.now() - state.startedAt >= limits.maxDurationMs)
+      return "time_limit";
+    if (state.entriesScanned >= limits.maxEntries) return "entry_limit";
     return null;
   };
 
-  walk:
-  while (queueHead < queue.length) {
+  walk: while (queueHead < queue.length) {
     stopReason = checkStop();
     if (stopReason) break;
     const relPath = queue[queueHead];
@@ -141,7 +153,7 @@ async function walkWorkspaceFiles({
       if (stopReason) break;
     } catch (error) {
       if (shouldSkipError(error, relPath)) {
-        partialReason = partialReason || 'io_error';
+        partialReason = partialReason || "io_error";
         continue;
       }
       throw error;
@@ -150,19 +162,21 @@ async function walkWorkspaceFiles({
     state.directoriesScanned += 1;
 
     try {
-      for await (const dirent of iterateDirectoryEntries(fs, directoryPath, { onCleanupError })) {
+      for await (const dirent of iterateDirectoryEntries(fs, directoryPath, {
+        onCleanupError,
+      })) {
         stopReason = checkStop();
         if (stopReason) break walk;
         state.entriesScanned += 1;
         if (dirent?.isSymbolicLink?.()) continue;
 
-        const name = String(dirent?.name || '');
+        const name = String(dirent?.name || "");
         if (!name) continue;
         const entryRelPath = relPath ? `${relPath}/${name}` : name;
         if (dirent.isDirectory?.()) {
           if (shouldSkipDirectory(name, entryRelPath)) continue;
           if (directoriesQueued >= limits.maxDirectories) {
-            stopReason = 'directory_limit';
+            stopReason = "directory_limit";
             break walk;
           }
           queue.push(entryRelPath);
@@ -171,7 +185,7 @@ async function walkWorkspaceFiles({
         }
         if (!dirent.isFile?.()) continue;
         if (state.filesScanned >= limits.maxFiles) {
-          stopReason = 'file_limit';
+          stopReason = "file_limit";
           break walk;
         }
         state.filesScanned += 1;
@@ -179,13 +193,13 @@ async function walkWorkspaceFiles({
         stopReason = checkStop();
         if (stopReason) break walk;
         if (keepGoing === false) {
-          stopReason = 'consumer_limit';
+          stopReason = "consumer_limit";
           break walk;
         }
       }
     } catch (error) {
       if (shouldSkipError(error, relPath)) {
-        partialReason = partialReason || 'io_error';
+        partialReason = partialReason || "io_error";
         continue;
       }
       throw error;

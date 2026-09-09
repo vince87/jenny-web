@@ -1,6 +1,12 @@
-'use strict';
+"use strict";
 
-const REQUIRED_FIELDS = ['name', 'description', 'parameters', 'execute', 'summarize'];
+const REQUIRED_FIELDS = [
+  "name",
+  "description",
+  "parameters",
+  "execute",
+  "summarize",
+];
 
 class ToolRegistry {
   constructor() {
@@ -15,21 +21,24 @@ class ToolRegistry {
       }
     }
 
-    if (typeof definition.execute !== 'function') {
+    if (typeof definition.execute !== "function") {
       throw new Error(`Tool "${definition.name}" execute must be a function`);
     }
-    if (typeof definition.summarize !== 'function') {
+    if (typeof definition.summarize !== "function") {
       throw new Error(`Tool "${definition.name}" summarize must be a function`);
     }
 
-    if (this._tools.has(definition.name) || this._aliases.has(definition.name)) {
+    if (
+      this._tools.has(definition.name) ||
+      this._aliases.has(definition.name)
+    ) {
       throw new Error(`Tool "${definition.name}" is already registered`);
     }
 
     const aliases = Array.isArray(definition.aliases)
       ? definition.aliases
-        .map((value) => String(value || '').trim())
-        .filter((value) => value && value !== definition.name)
+          .map((value) => String(value || "").trim())
+          .filter((value) => value && value !== definition.name)
       : [];
 
     for (const alias of aliases) {
@@ -41,18 +50,22 @@ class ToolRegistry {
     const normalized = {
       name: definition.name,
       description: definition.description,
-      category: definition.category || 'builtin',
+      category: definition.category || "builtin",
       readOnly: definition.readOnly === true,
       sideEffecting: definition.sideEffecting === true,
       workflowEligible: definition.workflowEligible === true,
-      toolFamily: typeof definition.toolFamily === 'string' ? definition.toolFamily : '',
-      sourceKind: typeof definition.sourceKind === 'string' ? definition.sourceKind : '',
-      serverName: typeof definition.serverName === 'string' ? definition.serverName : '',
+      toolFamily:
+        typeof definition.toolFamily === "string" ? definition.toolFamily : "",
+      sourceKind:
+        typeof definition.sourceKind === "string" ? definition.sourceKind : "",
+      serverName:
+        typeof definition.serverName === "string" ? definition.serverName : "",
       workspaceRequired: definition.workspaceRequired !== false,
       planModeOnly: definition.planModeOnly === true,
-      actions: definition.actions && typeof definition.actions === 'object'
-        ? definition.actions
-        : undefined,
+      actions:
+        definition.actions && typeof definition.actions === "object"
+          ? definition.actions
+          : undefined,
       parameters: definition.parameters,
       summarize: definition.summarize,
       execute: definition.execute,
@@ -78,13 +91,11 @@ class ToolRegistry {
 
   getToolSchemas({ planMode = false } = {}) {
     const tools = this.getAllTools();
-    const filtered = tools.filter((tool) => (
-      planMode
-        ? tool.readOnly
-        : !tool.planModeOnly
-    ));
+    const filtered = tools.filter((tool) =>
+      planMode ? tool.readOnly : !tool.planModeOnly,
+    );
     return filtered.map((t) => ({
-      type: 'function',
+      type: "function",
       function: {
         name: t.name,
         description: t.description,

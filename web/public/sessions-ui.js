@@ -1,8 +1,21 @@
 "use strict";
 async function listSessions() {
-  const currentWorkspace = workspace, filter = $("chatSearch").value, archived = $("showArchived").checked;
-  const { sessions } = await api("/sessions?" + new URLSearchParams({q:$("chatSearch").value,archived:$("showArchived").checked}));
-  if (workspace !== currentWorkspace || filter !== $("chatSearch").value || archived !== $("showArchived").checked) return;
+  const currentWorkspace = workspace,
+    filter = $("chatSearch").value,
+    archived = $("showArchived").checked;
+  const { sessions } = await api(
+    "/sessions?" +
+      new URLSearchParams({
+        q: $("chatSearch").value,
+        archived: $("showArchived").checked,
+      }),
+  );
+  if (
+    workspace !== currentWorkspace ||
+    filter !== $("chatSearch").value ||
+    archived !== $("showArchived").checked
+  )
+    return;
   $("sessions").replaceChildren();
   for (const s of sessions.filter((s) => s.workspace === workspace)) {
     const b = document.createElement("button");

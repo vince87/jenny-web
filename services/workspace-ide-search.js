@@ -4,16 +4,16 @@
  * produced: per-file/aggregate bytes, files, directories, entries, wall time,
  * and results. Symlinks are never followed. */
 
-const nodeFs = require('node:fs');
-const fsPromises = require('fs/promises');
+const nodeFs = require("node:fs");
+const fsPromises = require("fs/promises");
 const {
   ENUMERATION_DEFAULTS,
   cancellationReason,
   normalizePositiveInteger,
   walkWorkspaceFiles,
-} = require('./workspace-ide-enumerator');
-const { createWalkIgnorePolicy } = require('./workspace-ide-ignore-policy');
-const { sameFileIdentity } = require('./workspace-root-operation');
+} = require("./workspace-ide-enumerator");
+const { createWalkIgnorePolicy } = require("./workspace-ide-ignore-policy");
+const { sameFileIdentity } = require("./workspace-root-operation");
 
 const SEARCH_DEFAULTS = Object.freeze({
   maxResults: 500,
@@ -29,7 +29,9 @@ const SEARCH_QUERY_MAX_CHARS = 256;
 const BINARY_SCAN_LENGTH = 8192;
 const PREVIEW_MAX_CHARS = 240;
 const PREVIEW_LEAD_CHARS = 40;
-const SEARCH_WALK_IGNORE_POLICY = createWalkIgnorePolicy({ extraSkipNames: ['node_modules'] });
+const SEARCH_WALK_IGNORE_POLICY = createWalkIgnorePolicy({
+  extraSkipNames: ["node_modules"],
+});
 
 function isBinaryBuffer(buffer) {
   const scanLength = Math.min(buffer.length, BINARY_SCAN_LENGTH);
@@ -62,12 +64,16 @@ function normalizeByteBudget(value, fallback, ceiling) {
 
 function statValue(stats, key) {
   const value = stats?.[key];
-  return typeof value === 'bigint' ? value.toString() : String(value ?? '');
+  return typeof value === "bigint" ? value.toString() : String(value ?? "");
 }
 
 function sameFileSnapshot(left, right) {
-  return sameFileIdentity(left, right)
-    && ['size', 'mtimeMs', 'ctimeMs'].every((key) => statValue(left, key) === statValue(right, key));
+  return (
+    sameFileIdentity(left, right) &&
+    ["size", "mtimeMs", "ctimeMs"].every(
+      (key) => statValue(left, key) === statValue(right, key),
+    )
+  );
 }
 
 function buildSafeReadFlags(constants = nodeFs.constants) {
@@ -93,37 +99,48 @@ async function readBoundedFile({
     assertCurrent?.();
     const openedStats = await handle.stat();
     assertCurrent?.();
-    if (!openedStats.isFile?.() || !sameFileSnapshot(expectedStats, openedStats)) {
-      return { status: 'file_changed', buffer: null };
+    if (
+      !openedStats.isFile?.() ||
+      !sameFileSnapshot(expectedStats, openedStats)
+    ) {
+      return { status: "file_changed", buffer: null };
     }
-    if (Number(openedStats.size) > maxBytes) return { status: 'too_large', buffer: null };
+    if (Number(openedStats.size) > maxBytes)
+      return { status: "too_large", buffer: null };
 
     const expectedBytes = Number(openedStats.size);
     const buffer = Buffer.allocUnsafe(Math.min(expectedBytes, maxBytes) + 1);
     let bytesRead = 0;
     while (bytesRead < buffer.length) {
-      const chunk = await handle.read(buffer, bytesRead, buffer.length - bytesRead, bytesRead);
+      const chunk = await handle.read(
+        buffer,
+        bytesRead,
+        buffer.length - bytesRead,
+        bytesRead,
+      );
       assertCurrent?.();
-      if (!Number.isSafeInteger(chunk?.bytesRead) || chunk.bytesRead <= 0) break;
+      if (!Number.isSafeInteger(chunk?.bytesRead) || chunk.bytesRead <= 0)
+        break;
       if (chunk.bytesRead > buffer.length - bytesRead) {
-        return { status: 'unreadable', buffer: null };
+        return { status: "unreadable", buffer: null };
       }
       bytesRead += chunk.bytesRead;
     }
     const finalStats = await handle.stat();
     assertCurrent?.();
     if (!sameFileSnapshot(openedStats, finalStats)) {
-      return { status: 'file_changed', buffer: null };
+      return { status: "file_changed", buffer: null };
     }
-    if (bytesRead !== expectedBytes) return { status: 'file_changed', buffer: null };
-    if (bytesRead > maxBytes) return { status: 'too_large', buffer: null };
-    return { status: 'ok', buffer: buffer.subarray(0, bytesRead) };
+    if (bytesRead !== expectedBytes)
+      return { status: "file_changed", buffer: null };
+    if (bytesRead > maxBytes) return { status: "too_large", buffer: null };
+    return { status: "ok", buffer: buffer.subarray(0, bytesRead) };
   } catch (error) {
-    if (String(error?.code || '').startsWith('CMP-')) throw error;
-    if (error?.code === 'ELOOP' || error?.code === 'EMLINK') {
-      return { status: 'file_changed', buffer: null };
+    if (String(error?.code || "").startsWith("CMP-")) throw error;
+    if (error?.code === "ELOOP" || error?.code === "EMLINK") {
+      return { status: "file_changed", buffer: null };
     }
-    return { status: 'unreadable', buffer: null };
+    return { status: "unreadable", buffer: null };
   } finally {
     try {
       await handle?.close?.();
@@ -161,10 +178,10 @@ function foldLineWithMap(rawLine) {
   // the [start, end) span of the original code point that produced it. Used
   // only when whole-line lowercasing changed the line length (e.g. U+0130 İ
   // folds to i + U+0307), where folded offsets drift from real columns.
-  let folded = '';
+  let folded = "";
   const starts = [];
   const ends = [];
-  for (let index = 0; index < rawLine.length;) {
+  for (let index = 0; index < rawLine.length; ) {
     const codePoint = rawLine.codePointAt(index);
     const sourceLength = codePoint > 0xffff ? 2 : 1;
     const lower = rawLine.slice(index, index + sourceLength).toLowerCase();
@@ -178,10 +195,21 @@ function foldLineWithMap(rawLine) {
   return { folded, starts, ends };
 }
 
-function appendMatches({ buffer, relPath, needle, foldedNeedle, caseSensitive, results, matchedFiles, resultCap }) {
-  const lines = buffer.toString('utf8').split('\n');
+function appendMatches({
+  buffer,
+  relPath,
+  needle,
+  foldedNeedle,
+  caseSensitive,
+  results,
+  matchedFiles,
+  resultCap,
+}) {
+  const lines = buffer.toString("utf8").split("\n");
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
-    const rawLine = lines[lineIndex].endsWith('\r') ? lines[lineIndex].slice(0, -1) : lines[lineIndex];
+    const rawLine = lines[lineIndex].endsWith("\r")
+      ? lines[lineIndex].slice(0, -1)
+      : lines[lineIndex];
     let haystack = caseSensitive ? rawLine : rawLine.toLowerCase();
     // Default-locale lowercasing never contracts, so an unchanged length
     // guarantees folded offsets equal raw-line columns; a changed length
@@ -209,7 +237,10 @@ function appendMatches({ buffer, relPath, needle, foldedNeedle, caseSensitive, r
         preview: buildPreview(rawLine, start, end - start),
       });
       if (results.length >= resultCap) return false;
-      matchStart = haystack.indexOf(foldedNeedle, matchStart + foldedNeedle.length);
+      matchStart = haystack.indexOf(
+        foldedNeedle,
+        matchStart + foldedNeedle.length,
+      );
     }
   }
   return true;
@@ -231,9 +262,9 @@ async function searchWorkspaceFiles({
   maxDirectories = SEARCH_DEFAULTS.maxDirectories,
   maxEntries = SEARCH_DEFAULTS.maxEntries,
   maxDurationMs = SEARCH_DEFAULTS.maxDurationMs,
-  scope = '',
+  scope = "",
   fs = fsPromises,
-  path = require('path'),
+  path = require("path"),
   ignorePolicy = null,
   resolveDirectory = null,
   resolveFile = null,
@@ -244,18 +275,28 @@ async function searchWorkspaceFiles({
   onWarning = null,
   openConstants = nodeFs.constants,
 } = {}) {
-  const needle = String(query ?? '').slice(0, SEARCH_QUERY_MAX_CHARS);
+  const needle = String(query ?? "").slice(0, SEARCH_QUERY_MAX_CHARS);
   const activeIgnorePolicy = ignorePolicy || SEARCH_WALK_IGNORE_POLICY;
-  if (!root || !needle.trim()) return emptySearchResult(needle, activeIgnorePolicy.describe().source);
+  if (!root || !needle.trim())
+    return emptySearchResult(needle, activeIgnorePolicy.describe().source);
 
   const maxResultsRaw = Number(maxResults);
-  const resultCap = Number.isFinite(maxResultsRaw) && maxResultsRaw > 0
-    ? Math.min(Math.floor(maxResultsRaw), SEARCH_MAX_RESULTS_CEILING)
-    : SEARCH_DEFAULTS.maxResults;
-  const fileByteCap = normalizeByteBudget(maxFileBytes, SEARCH_DEFAULTS.maxFileBytes, 16 * 1024 * 1024);
-  const totalByteCap = normalizeByteBudget(maxTotalBytes, SEARCH_DEFAULTS.maxTotalBytes, 256 * 1024 * 1024);
+  const resultCap =
+    Number.isFinite(maxResultsRaw) && maxResultsRaw > 0
+      ? Math.min(Math.floor(maxResultsRaw), SEARCH_MAX_RESULTS_CEILING)
+      : SEARCH_DEFAULTS.maxResults;
+  const fileByteCap = normalizeByteBudget(
+    maxFileBytes,
+    SEARCH_DEFAULTS.maxFileBytes,
+    16 * 1024 * 1024,
+  );
+  const totalByteCap = normalizeByteBudget(
+    maxTotalBytes,
+    SEARCH_DEFAULTS.maxTotalBytes,
+    256 * 1024 * 1024,
+  );
   const foldedNeedle = caseSensitive ? needle : needle.toLowerCase();
-  const scopeDir = String(scope || '').replace(/\/+$/, '');
+  const scopeDir = String(scope || "").replace(/\/+$/, "");
   const results = [];
   const matchedFiles = new Set();
   let totalBytes = 0;
@@ -263,33 +304,42 @@ async function searchWorkspaceFiles({
   let consumerPartialReason = null;
   const safeReadFlags = buildSafeReadFlags(openConstants);
   const ensureCurrent = () => cancellationReason({ signal, assertCurrent });
-  const resolve = typeof resolveDirectory === 'function'
-    ? resolveDirectory
-    : async (relPath) => path.join(root, relPath);
-  const resolveSearchFile = typeof resolveFile === 'function'
-    ? resolveFile
-    : async (relPath) => {
-      const filePath = path.join(root, relPath);
-      return { filePath, stats: await fs.stat(filePath) };
-    };
-  const revalidateSearchFile = typeof revalidateFile === 'function'
-    ? revalidateFile
-    : async (target) => sameFileSnapshot(target.stats, await fs.stat(target.filePath));
+  const resolve =
+    typeof resolveDirectory === "function"
+      ? resolveDirectory
+      : async (relPath) => path.join(root, relPath);
+  const resolveSearchFile =
+    typeof resolveFile === "function"
+      ? resolveFile
+      : async (relPath) => {
+          const filePath = path.join(root, relPath);
+          return { filePath, stats: await fs.stat(filePath) };
+        };
+  const revalidateSearchFile =
+    typeof revalidateFile === "function"
+      ? revalidateFile
+      : async (target) =>
+          sameFileSnapshot(target.stats, await fs.stat(target.filePath));
 
   const enumeration = await walkWorkspaceFiles({
     fs,
     initialRelPath: scopeDir,
     resolveDirectory: resolve,
     shouldSkipDirectory: activeIgnorePolicy.shouldSkipDirectory,
-    shouldSkipError: (error) => ['ENOENT', 'EACCES', 'ENOTDIR'].includes(error?.code),
-    maxFiles: normalizePositiveInteger(maxFiles, SEARCH_DEFAULTS.maxFiles, 50000),
+    shouldSkipError: (error) =>
+      ["ENOENT", "EACCES", "ENOTDIR"].includes(error?.code),
+    maxFiles: normalizePositiveInteger(
+      maxFiles,
+      SEARCH_DEFAULTS.maxFiles,
+      50000,
+    ),
     maxDirectories,
     maxEntries,
     maxDurationMs,
     signal,
     assertCurrent,
     now,
-    onCleanupError: () => onWarning?.('directory_close_failed'),
+    onCleanupError: () => onWarning?.("directory_close_failed"),
     onFile: async (relPath) => {
       if (ensureCurrent()) return false;
       let target;
@@ -297,20 +347,20 @@ async function searchWorkspaceFiles({
         target = await resolveSearchFile(relPath);
         if (ensureCurrent()) return false;
       } catch (error) {
-        if (String(error?.code || '').startsWith('CMP-')) throw error;
-        consumerPartialReason = consumerPartialReason || 'io_error';
+        if (String(error?.code || "").startsWith("CMP-")) throw error;
+        consumerPartialReason = consumerPartialReason || "io_error";
         return true;
       }
       if (!target?.stats?.isFile?.()) return true;
       const expectedSize = Number(target.stats.size);
       if (!Number.isSafeInteger(expectedSize) || expectedSize < 0) {
-        consumerPartialReason = consumerPartialReason || 'file_changed';
+        consumerPartialReason = consumerPartialReason || "file_changed";
         return true;
       }
       if (expectedSize > fileByteCap) return true;
       const remainingBytes = totalByteCap - totalBytes;
       if (expectedSize > remainingBytes) {
-        consumerLimitReason = 'byte_limit';
+        consumerLimitReason = "byte_limit";
         return false;
       }
       const readLimit = Math.min(fileByteCap, remainingBytes);
@@ -321,32 +371,32 @@ async function searchWorkspaceFiles({
         maxBytes: readLimit,
         openFlags: safeReadFlags,
         assertCurrent: () => {
-          if (ensureCurrent()) throw new Error('Search cancelled');
+          if (ensureCurrent()) throw new Error("Search cancelled");
         },
-        onCleanupError: () => onWarning?.('file_close_failed'),
+        onCleanupError: () => onWarning?.("file_close_failed"),
       });
       if (ensureCurrent()) return false;
       let stillCurrent;
       try {
         stillCurrent = await revalidateSearchFile(target);
       } catch (error) {
-        if (String(error?.code || '').startsWith('CMP-')) throw error;
-        consumerPartialReason = consumerPartialReason || 'file_changed';
+        if (String(error?.code || "").startsWith("CMP-")) throw error;
+        consumerPartialReason = consumerPartialReason || "file_changed";
         return true;
       }
       if (ensureCurrent()) return false;
       if (stillCurrent === false) {
-        consumerPartialReason = consumerPartialReason || 'file_changed';
+        consumerPartialReason = consumerPartialReason || "file_changed";
         return true;
       }
-      if (read.status === 'too_large') {
+      if (read.status === "too_large") {
         if (remainingBytes <= fileByteCap) {
-          consumerLimitReason = 'byte_limit';
+          consumerLimitReason = "byte_limit";
           return false;
         }
         return true;
       }
-      if (read.status !== 'ok') {
+      if (read.status !== "ok") {
         consumerPartialReason = consumerPartialReason || read.status;
         return true;
       }
@@ -363,13 +413,14 @@ async function searchWorkspaceFiles({
         matchedFiles,
         resultCap,
       });
-      if (!keepGoing) consumerLimitReason = 'result_limit';
+      if (!keepGoing) consumerLimitReason = "result_limit";
       return keepGoing;
     },
   });
-  const truncationReason = enumeration.truncationReason === 'consumer_limit'
-    ? consumerLimitReason || 'consumer_limit'
-    : enumeration.truncationReason || consumerPartialReason;
+  const truncationReason =
+    enumeration.truncationReason === "consumer_limit"
+      ? consumerLimitReason || "consumer_limit"
+      : enumeration.truncationReason || consumerPartialReason;
   const truncated = Boolean(truncationReason);
   return {
     query: needle,

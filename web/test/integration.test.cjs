@@ -90,23 +90,79 @@ const tool = (name, args, id = "call-1") => ({
   function: { name, arguments: JSON.stringify(args) },
 });
 const finish = { role: "assistant", content: "Operazione conclusa." };
-test('Extensions HTTP requires authentication and confirmation; agent approval is single use and revocable',async t=>{
- const x=await setup(t,async(_,n)=>n===1?{role:'assistant',tool_calls:[tool('terminal_run',{command:'printf test'})]}:finish);
- assert.equal((await x.api('/api/extensions',undefined,{Authorization:'Bearer invalid'})).status,401);
- assert.equal((await x.api('/api/extensions/install',{kind:'terminal'})).status,400);
- assert.equal((await x.api('/api/extensions/install',{kind:'terminal',confirmed:true})).status,201);
- const id=await x.chat('Run a command');const pending=await x.wait(id,'waiting');
- assert.equal(pending.pending.extension,'terminal_run');assert.equal((await x.api('/api/runner')).body.jobs.length,0);
- await x.api('/api/extensions/manage',{id:'terminal',action:'disable'});
- await x.api('/api/sessions/'+id+'/approval',{id:pending.pending.id,allowed:true});
- const done=await x.wait(id,'idle');assert.match(done.messages.find(m=>m.role==='tool').content,/disabled/);
- assert.equal((await x.api('/api/runner')).body.jobs.length,0);
- assert.equal((await x.api('/api/sessions/'+id+'/approval',{id:pending.pending.id,allowed:true})).status,400);
+test("Extensions HTTP requires authentication and confirmation; agent approval is single use and revocable", async (t) => {
+  const x = await setup(t, async (_, n) =>
+    n === 1
+      ? {
+          role: "assistant",
+          tool_calls: [tool("terminal_run", { command: "printf test" })],
+        }
+      : finish,
+  );
+  assert.equal(
+    (
+      await x.api("/api/extensions", undefined, {
+        Authorization: "Bearer invalid",
+      })
+    ).status,
+    401,
+  );
+  assert.equal(
+    (await x.api("/api/extensions/install", { kind: "terminal" })).status,
+    400,
+  );
+  assert.equal(
+    (
+      await x.api("/api/extensions/install", {
+        kind: "terminal",
+        confirmed: true,
+      })
+    ).status,
+    201,
+  );
+  const id = await x.chat("Run a command");
+  const pending = await x.wait(id, "waiting");
+  assert.equal(pending.pending.extension, "terminal_run");
+  assert.equal((await x.api("/api/runner")).body.jobs.length, 0);
+  await x.api("/api/extensions/manage", { id: "terminal", action: "disable" });
+  await x.api("/api/sessions/" + id + "/approval", {
+    id: pending.pending.id,
+    allowed: true,
+  });
+  const done = await x.wait(id, "idle");
+  assert.match(
+    done.messages.find((m) => m.role === "tool").content,
+    /disabled/,
+  );
+  assert.equal((await x.api("/api/runner")).body.jobs.length, 0);
+  assert.equal(
+    (
+      await x.api("/api/sessions/" + id + "/approval", {
+        id: pending.pending.id,
+        allowed: true,
+      })
+    ).status,
+    400,
+  );
 });
-test('Extension rejection never creates a job',async t=>{
- const x=await setup(t,async(_,n)=>n===1?{role:'assistant',tool_calls:[tool('terminal_run',{command:'printf test'})]}:finish);
- await x.api('/api/extensions/install',{kind:'terminal',confirmed:true});const id=await x.chat('Run');const pending=await x.wait(id,'waiting');
- await x.api('/api/sessions/'+id+'/approval',{id:pending.pending.id,allowed:false});await x.wait(id,'idle');assert.equal((await x.api('/api/runner')).body.jobs.length,0);
+test("Extension rejection never creates a job", async (t) => {
+  const x = await setup(t, async (_, n) =>
+    n === 1
+      ? {
+          role: "assistant",
+          tool_calls: [tool("terminal_run", { command: "printf test" })],
+        }
+      : finish,
+  );
+  await x.api("/api/extensions/install", { kind: "terminal", confirmed: true });
+  const id = await x.chat("Run");
+  const pending = await x.wait(id, "waiting");
+  await x.api("/api/sessions/" + id + "/approval", {
+    id: pending.pending.id,
+    allowed: false,
+  });
+  await x.wait(id, "idle");
+  assert.equal((await x.api("/api/runner")).body.jobs.length, 0);
 });
 test("HTTP: pagina reale, asset, health, autenticazione e origini", async (t) => {
   const x = await setup(t, async () => finish);
@@ -145,7 +201,7 @@ test("HTTP: pagina reale, asset, health, autenticazione e origini", async (t) =>
     415,
   );
   assert.deepEqual((await x.api("/api/models")).body.models, ["local-test"]);
-  assert.equal((await x.api("/api/config")).body.version, "0.6.1");
+  assert.equal((await x.api("/api/config")).body.version, "0.6.2");
 });
 test("File: creazione, lettura, modifica, conflitto e separazione workspace", async (t) => {
   const { api } = await setup(t, async () => finish);
@@ -202,7 +258,10 @@ test("File: creazione, lettura, modifica, conflitto e separazione workspace", as
   );
 });
 test("Confini filesystem: traversal, .git, symlink, binari, limite dimensioni", async (t) => {
-  if(process.platform==='win32'){t.skip('POSIX symlinks: run in Linux Docker CI.');return;}
+  if (process.platform === "win32") {
+    t.skip("POSIX symlinks: run in Linux Docker CI.");
+    return;
+  }
   const { api, dir } = await setup(t, async () => finish);
   await fs.writeFile(path.join(dir, "secret"), "segreto");
   await fs.symlink(
@@ -639,43 +698,144 @@ test("Lingua inglese: errori API, titolo iniziale e istruzione modello", async (
   assert.equal((await fetch(x.base + "/i18n.js")).status, 200);
 });
 
-test('History HTTP: authenticated list, preview and editor restore', async t => {
+test("History HTTP: authenticated list, preview and editor restore", async (t) => {
   const x = await setup(t, async () => finish);
-  const file = {workspace:'principale',path:'history.txt'};
-  const first = (await x.api('/api/file',{...file,content:'before',revision:null})).body;
-  const second = (await x.api('/api/file',{...file,content:'after',revision:first.revision})).body;
-  const route = '/api/file-history?' + new URLSearchParams(file);
-  assert.equal((await fetch(x.base + route)).status,401);
+  const file = { workspace: "principale", path: "history.txt" };
+  const first = (
+    await x.api("/api/file", { ...file, content: "before", revision: null })
+  ).body;
+  const second = (
+    await x.api("/api/file", {
+      ...file,
+      content: "after",
+      revision: first.revision,
+    })
+  ).body;
+  const route = "/api/file-history?" + new URLSearchParams(file);
+  assert.equal((await fetch(x.base + route)).status, 401);
   const list = await x.api(route);
-  assert.equal(list.status,200);
-  assert.equal(list.body.versions.length,1);
-  const previous = await x.api(route + '&id=' + list.body.versions[0].id);
-  assert.equal(previous.body.content,'before');
-  const restored = await x.api('/api/file',{...file,content:previous.body.content,revision:second.revision});
-  assert.equal(restored.body.content,'before');
+  assert.equal(list.status, 200);
+  assert.equal(list.body.versions.length, 1);
+  const previous = await x.api(route + "&id=" + list.body.versions[0].id);
+  assert.equal(previous.body.content, "before");
+  const restored = await x.api("/api/file", {
+    ...file,
+    content: previous.body.content,
+    revision: second.revision,
+  });
+  assert.equal(restored.body.content, "before");
 });
 
-test('Workspace instructions, attachments and archive/search are integrated in HTTP turns',async t=>{
- const x=await setup(t,async()=>finish);
- const instructions=await x.api('/api/instructions',{workspace:'principale',content:'Use short explanations.',revision:null});assert.equal(instructions.status,200);
- const {body:s}=await x.api('/api/sessions',{workspace:'principale'});
- const sent=await x.api('/api/sessions/'+s.id+'/message',{content:'Review this',attachments:[{name:'example.txt',content:'UNIQUE_ATTACHMENT'}],profile:'light'});assert.equal(sent.status,202);
- await x.wait(s.id,'idle');assert.match(x.calls[0].messages[0].content,/Use short explanations/);assert.match(x.calls[0].messages.find(m=>m.role==='user').content,/UNIQUE_ATTACHMENT/);
- assert.equal(x.calls[0].jennySettings,undefined);
- await x.api('/api/sessions/'+s.id+'/archive',{archived:true});assert.equal((await x.api('/api/sessions')).body.sessions.length,0);
- assert.equal((await x.api('/api/sessions?archived=true&q=UNIQUE_ATTACHMENT')).body.sessions.length,1);
- assert.equal((await x.api('/api/sessions/'+s.id+'/message',{content:'again'})).status,400);
- await x.api('/api/sessions/'+s.id+'/archive',{archived:false});assert.equal((await x.api('/api/sessions')).body.sessions.length,1);
- assert.equal((await x.api('/api/sessions/'+s.id+'/message',{content:'x',attachments:[{name:'huge',content:'x'.repeat(13000)}]})).status,400);
- const diag=await x.api('/api/diagnostics?model=local-test');assert.equal(diag.body.checks.find(c=>c.name==='data').ok,true);
+test("Workspace instructions, attachments and archive/search are integrated in HTTP turns", async (t) => {
+  const x = await setup(t, async () => finish);
+  const instructions = await x.api("/api/instructions", {
+    workspace: "principale",
+    content: "Use short explanations.",
+    revision: null,
+  });
+  assert.equal(instructions.status, 200);
+  const { body: s } = await x.api("/api/sessions", { workspace: "principale" });
+  const sent = await x.api("/api/sessions/" + s.id + "/message", {
+    content: "Review this",
+    attachments: [{ name: "example.txt", content: "UNIQUE_ATTACHMENT" }],
+    profile: "light",
+  });
+  assert.equal(sent.status, 202);
+  await x.wait(s.id, "idle");
+  assert.match(x.calls[0].messages[0].content, /Use short explanations/);
+  assert.match(
+    x.calls[0].messages.find((m) => m.role === "user").content,
+    /UNIQUE_ATTACHMENT/,
+  );
+  assert.equal(x.calls[0].jennySettings, undefined);
+  await x.api("/api/sessions/" + s.id + "/archive", { archived: true });
+  assert.equal((await x.api("/api/sessions")).body.sessions.length, 0);
+  assert.equal(
+    (await x.api("/api/sessions?archived=true&q=UNIQUE_ATTACHMENT")).body
+      .sessions.length,
+    1,
+  );
+  assert.equal(
+    (await x.api("/api/sessions/" + s.id + "/message", { content: "again" }))
+      .status,
+    400,
+  );
+  await x.api("/api/sessions/" + s.id + "/archive", { archived: false });
+  assert.equal((await x.api("/api/sessions")).body.sessions.length, 1);
+  assert.equal(
+    (
+      await x.api("/api/sessions/" + s.id + "/message", {
+        content: "x",
+        attachments: [{ name: "huge", content: "x".repeat(13000) }],
+      })
+    ).status,
+    400,
+  );
+  const diag = await x.api("/api/diagnostics?model=local-test");
+  assert.equal(diag.body.checks.find((c) => c.name === "data").ok, true);
 });
-test('Multi-file approval makes separate decisions, respects conflicts and cannot be reused',async t=>{
- const x=await setup(t,async(_,n)=>n===1?{role:'assistant',tool_calls:[tool('write_files',{files:[{path:'one.txt',content:'new one'},{path:'two.txt',content:'new two'},{path:'three.txt',content:'new three'}]})]}:finish);
- const id=await x.chat('Create three files');const waiting=await x.wait(id,'waiting');assert.equal(waiting.pending.files.length,3);
- await x.api('/api/file',{workspace:'principale',path:'three.txt',content:'external',revision:null});
- assert.equal((await x.api('/api/sessions/'+id+'/approval',{id:waiting.pending.id,allowed:true})).status,400);
- const decision={id:waiting.pending.id,allowed:true,decisions:[true,false,true]};await x.api('/api/sessions/'+id+'/approval',decision);const done=await x.wait(id,'idle');
- assert.equal((await x.api('/api/file?workspace=principale&path=one.txt')).body.content,'new one');assert.equal((await x.api('/api/file?workspace=principale&path=two.txt')).status,400);assert.equal((await x.api('/api/file?workspace=principale&path=three.txt')).body.content,'external');
- const result=JSON.parse(done.messages.find(m=>m.role==='tool').content);assert.ok(result.files[0].written);assert.ok(result.files[1].denied);assert.ok(result.files[2].error);
- assert.equal((await x.api('/api/sessions/'+id+'/approval',decision)).status,400);
+test("Multi-file approval makes separate decisions, respects conflicts and cannot be reused", async (t) => {
+  const x = await setup(t, async (_, n) =>
+    n === 1
+      ? {
+          role: "assistant",
+          tool_calls: [
+            tool("write_files", {
+              files: [
+                { path: "one.txt", content: "new one" },
+                { path: "two.txt", content: "new two" },
+                { path: "three.txt", content: "new three" },
+              ],
+            }),
+          ],
+        }
+      : finish,
+  );
+  const id = await x.chat("Create three files");
+  const waiting = await x.wait(id, "waiting");
+  assert.equal(waiting.pending.files.length, 3);
+  await x.api("/api/file", {
+    workspace: "principale",
+    path: "three.txt",
+    content: "external",
+    revision: null,
+  });
+  assert.equal(
+    (
+      await x.api("/api/sessions/" + id + "/approval", {
+        id: waiting.pending.id,
+        allowed: true,
+      })
+    ).status,
+    400,
+  );
+  const decision = {
+    id: waiting.pending.id,
+    allowed: true,
+    decisions: [true, false, true],
+  };
+  await x.api("/api/sessions/" + id + "/approval", decision);
+  const done = await x.wait(id, "idle");
+  assert.equal(
+    (await x.api("/api/file?workspace=principale&path=one.txt")).body.content,
+    "new one",
+  );
+  assert.equal(
+    (await x.api("/api/file?workspace=principale&path=two.txt")).status,
+    400,
+  );
+  assert.equal(
+    (await x.api("/api/file?workspace=principale&path=three.txt")).body.content,
+    "external",
+  );
+  const result = JSON.parse(
+    done.messages.find((m) => m.role === "tool").content,
+  );
+  assert.ok(result.files[0].written);
+  assert.ok(result.files[1].denied);
+  assert.ok(result.files[2].error);
+  assert.equal(
+    (await x.api("/api/sessions/" + id + "/approval", decision)).status,
+    400,
+  );
 });

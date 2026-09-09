@@ -1,1 +1,0 @@
-"""Sidecar AI package."""

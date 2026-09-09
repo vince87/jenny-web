@@ -1,6 +1,14 @@
 # Jenny Web — roadmap operativa
 
-Ultimo aggiornamento: 2026-09-09 · Release di lavoro: **0.6.1**
+Ultimo aggiornamento: 2026-09-09 · Release di lavoro: **0.6.2**
+
+## Pulizia e login locale (richiesta corrente)
+
+- JW-047 — Pulizia implementata: rimozione di 4901 file desktop tracked, conservati 15 servizi richiesti dalla webapp; rimosso anche lo script obsoleto release-06. Formattazione uniforme e package root solo web. Recupero completo dal tag v0.6.1.
+- JW-048 — Prima fase login implementata come componente non attivo: account SQLite, password hash, ruoli, sessioni e revoche con test dedicati. Nessuna pagina login collegata e nessuna migrazione dati attiva.
+- JW-049 — Da fare: proprietà/isolamento di tutte le risorse, migrazione dei dati al primo admin, GUI login e gestione utenti, credenziale worker separata, test incrociati A/B. Specifica in LOGIN-WEB.md.
+
+Prossimo passo concreto: JW-049, iniziando dalla proprietà di chat e workspace. L'accesso con token resta attivo fino al collaudo dell'isolamento. Nessun dato del server dell'utente è stato modificato.
 
 ## Aggiornamento SearXNG 0.6.1
 

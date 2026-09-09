@@ -1,21 +1,24 @@
-'use strict';
+"use strict";
 
-const { TOOL_ERROR_CODES } = require('../backend/error-codes');
+const { TOOL_ERROR_CODES } = require("../backend/error-codes");
 
 const TOOL_DISABLED_CODE = TOOL_ERROR_CODES.DISABLED;
 
 class ToolPathPolicyError extends Error {
   constructor(message, { code = TOOL_DISABLED_CODE, retryable = false } = {}) {
     super(message);
-    this.name = 'ToolPathPolicyError';
+    this.name = "ToolPathPolicyError";
     this.code = code;
     this.retryable = retryable;
   }
 }
 
 function normalizeWorkingDirectory(context) {
-  const raw = context && typeof context === 'object' ? context.workingDirectory : undefined;
-  const normalized = typeof raw === 'string' ? raw.trim() : raw;
+  const raw =
+    context && typeof context === "object"
+      ? context.workingDirectory
+      : undefined;
+  const normalized = typeof raw === "string" ? raw.trim() : raw;
   return normalized || null;
 }
 
@@ -23,7 +26,7 @@ function requireWorkingDirectory(context) {
   const normalized = normalizeWorkingDirectory(context);
   if (!normalized) {
     throw new ToolPathPolicyError(
-      'tools workspace root is not configured; filesystem tools are blocked'
+      "tools workspace root is not configured; filesystem tools are blocked",
     );
   }
   return normalized;
@@ -38,7 +41,7 @@ class ToolPathPolicy {
   resolvePath(requestedPath, context) {
     const workingDirectory = requireWorkingDirectory(context);
     if (!requestedPath) {
-      throw new Error('Path is required');
+      throw new Error("Path is required");
     }
     const p = this._path;
     const resolved = p.isAbsolute(requestedPath)
@@ -57,7 +60,7 @@ class ToolPathPolicy {
     try {
       targetReal = await fs.realpath(resolvedPath);
     } catch (error) {
-      if (error && error.code === 'ENOENT') {
+      if (error && error.code === "ENOENT") {
         targetReal = await this._realpathForNewPath(resolvedPath);
       } else {
         throw error;
@@ -71,7 +74,7 @@ class ToolPathPolicy {
 
     if (targetNorm !== rootNorm && !targetNorm.startsWith(prefix)) {
       throw new Error(
-        `Path "${resolvedPath}" resolves outside the working directory "${workingDirectory}"`
+        `Path "${resolvedPath}" resolves outside the working directory "${workingDirectory}"`,
       );
     }
 
@@ -101,7 +104,7 @@ class ToolPathPolicy {
         }
         return result;
       } catch (error) {
-        if (error && error.code === 'ENOENT') {
+        if (error && error.code === "ENOENT") {
           trailing.push(p.basename(current));
           current = p.dirname(current);
           continue;
@@ -115,7 +118,7 @@ class ToolPathPolicy {
 
   _normalizeForComparison(filePath) {
     const normalized = this._path.resolve(filePath);
-    return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+    return process.platform === "win32" ? normalized.toLowerCase() : normalized;
   }
 }
 

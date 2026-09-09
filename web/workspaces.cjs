@@ -112,8 +112,22 @@ class Workspaces {
       throw e;
     }
   }
-  async readRange(name, file, startLine = 1, endLine = 200, startChar = 0, maxChars = 8000) {
-    if (!Number.isInteger(startChar) || startChar < 0 || !Number.isInteger(maxChars) || maxChars < 1 || maxChars > 12000) throw new Error("Limiti di lettura non validi.");
+  async readRange(
+    name,
+    file,
+    startLine = 1,
+    endLine = 200,
+    startChar = 0,
+    maxChars = 8000,
+  ) {
+    if (
+      !Number.isInteger(startChar) ||
+      startChar < 0 ||
+      !Number.isInteger(maxChars) ||
+      maxChars < 1 ||
+      maxChars > 12000
+    )
+      throw new Error("Limiti di lettura non validi.");
     if (
       !Number.isInteger(startLine) ||
       !Number.isInteger(endLine) ||
@@ -134,9 +148,11 @@ class Workspaces {
       totalLines: lines.length,
       content,
       startChar,
-      nextStartChar: startChar + maxChars < selected.length ? startChar + maxChars : null,
+      nextStartChar:
+        startChar + maxChars < selected.length ? startChar + maxChars : null,
       rangeChars: selected.length,
-      truncated: endLine < lines.length || startChar + maxChars < selected.length,
+      truncated:
+        endLine < lines.length || startChar + maxChars < selected.length,
     };
   }
   async search(name, query, root = "", limit = 100) {
@@ -167,7 +183,11 @@ class Workspaces {
       }
       truncated ||= listing.truncated;
       for (const e of listing.entries) {
-        if (Date.now() >= deadline || scanned >= 400 || matches.length >= limit) {
+        if (
+          Date.now() >= deadline ||
+          scanned >= 400 ||
+          matches.length >= limit
+        ) {
           truncated = true;
           break;
         }
@@ -198,7 +218,10 @@ class Workspaces {
             }
             const at = line.toLocaleLowerCase().indexOf(needle);
             if (at >= 0) {
-              if (++fileMatches > 5) { truncated = true; break; }
+              if (++fileMatches > 5) {
+                truncated = true;
+                break;
+              }
               const offset = Math.max(0, at - 60);
               matches.push({
                 path: e.relPath,
@@ -224,7 +247,8 @@ class Workspaces {
   }
   async instructions(name) {
     const r = await this.snapshot(name, "JENNY.md");
-    if (r && Array.from(r.content).length > 6000) throw new Error("JENNY.md supera 6000 caratteri.");
+    if (r && Array.from(r.content).length > 6000)
+      throw new Error("JENNY.md supera 6000 caratteri.");
     return r;
   }
   async historyDirectory(name, file) {
@@ -265,7 +289,12 @@ class Workspaces {
     if (!before) return;
     const directory = await this.historyDirectory(name, file);
     await fs.mkdir(directory, { recursive: true, mode: 0o700 });
-    const id = Date.now() + "-" + process.hrtime.bigint().toString(16).padStart(16,"0") + "-" + crypto.randomUUID();
+    const id =
+      Date.now() +
+      "-" +
+      process.hrtime.bigint().toString(16).padStart(16, "0") +
+      "-" +
+      crypto.randomUUID();
     await fs.writeFile(
       path.join(directory, id + ".json"),
       JSON.stringify({ content: before.content, revision: before.revision }),

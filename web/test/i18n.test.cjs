@@ -42,9 +42,18 @@ test("Markup: tutte le chiavi annotate e i riferimenti dinamici hanno traduzione
       .replace(/&#x27;/g, "'");
     assert.ok(Object.hasOwn(catalog.en, key), key);
   }
-  const app = fs.readdirSync(path.join(__dirname,"../public")).filter(f=>f.endsWith(".js") && f!=="i18n.js").map(f=>fs.readFileSync(path.join(__dirname,"../public",f),"utf8")).join("\n");
-  for (const m of app.matchAll(/\bt\(\s*(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)')\s*\)/g)) {
-    const key = m[1] !== undefined ? JSON.parse('"' + m[1] + '"') : m[2].replace(/\\'/g, "'");
+  const app = fs
+    .readdirSync(path.join(__dirname, "../public"))
+    .filter((f) => f.endsWith(".js") && f !== "i18n.js")
+    .map((f) => fs.readFileSync(path.join(__dirname, "../public", f), "utf8"))
+    .join("\n");
+  for (const m of app.matchAll(
+    /\bt\(\s*(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)')\s*\)/g,
+  )) {
+    const key =
+      m[1] !== undefined
+        ? JSON.parse('"' + m[1] + '"')
+        : m[2].replace(/\\'/g, "'");
     assert.ok(Object.hasOwn(catalog.en, key), key);
   }
 });

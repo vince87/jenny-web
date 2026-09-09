@@ -184,7 +184,8 @@ class OllamaProvider extends LocalProvider {
       if (frame.message?.thinking) {
         thinking += frame.message.thinking;
       }
-      if (frame.message?.content || frame.message?.thinking) onDelta(content, thinking);
+      if (frame.message?.content || frame.message?.thinking)
+        onDelta(content, thinking);
       if (frame.message?.tool_calls) tools.push(...frame.message.tool_calls);
       if (tools.length > 8)
         throw new Error("Troppi tool nella risposta Ollama.");

@@ -3,7 +3,7 @@
 Prima di riprendere, leggere `ROADMAP.md`, `README-WEB.md` e `VALIDAZIONE-WEB.md`.
 La roadmap è il registro canonico di lavoro svolto, verifiche mancanti e prossime attività.
 
-- Lavorare sulla derivazione web (`web/`, Docker, documentazione). I sorgenti desktop originali sono la baseline: modificarli solo per una necessità motivata e documentata.
+- Lavorare sulla derivazione web (`web/`, Docker, documentazione). Dalla 0.6.2 il desktop inutilizzato è rimosso su richiesta dell'utente; conservarne la storia Git e mantenere soltanto i servizi condivisi necessari.
 - Conservare licenza, NOTICE e provenienza Jenny. Non inviare modifiche al repository upstream.
 - Ollama è il provider prioritario; preservare l'alternativa OpenAI-compatible.
 - GUI italiana e inglese: nuovi testi nel catalogo `web/public/locales.json`. Rigenerare `i18n.js`; non modificare manualmente il bundle generato. Non tradurre il contenuto dei file o messaggi dell'utente attraverso scansioni globali del DOM.

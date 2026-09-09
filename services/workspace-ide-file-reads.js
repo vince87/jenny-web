@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /* Bounded file reads for WorkspaceIdeService. Split out of
  * workspace-ide-service.js, which sits at the 1015-line ceiling -- the rule
@@ -16,12 +16,17 @@
 // rather than a stat taken earlier, because a file that is being appended to --
 // an ordinary log -- can grow between the two.
 async function readCappedFile(fsImpl, realPath, maxBytes) {
-  const handle = await fsImpl.open(realPath, 'r');
+  const handle = await fsImpl.open(realPath, "r");
   try {
     const bytes = Buffer.alloc(Math.floor(maxBytes) + 1);
     let offset = 0;
     while (offset < bytes.length) {
-      const { bytesRead } = await handle.read(bytes, offset, bytes.length - offset, offset);
+      const { bytesRead } = await handle.read(
+        bytes,
+        offset,
+        bytes.length - offset,
+        offset,
+      );
       if (!bytesRead) {
         break;
       }

@@ -1,4 +1,10 @@
-# Jenny Web 0.6.1 — Web, plugin e MCP IT/EN
+# Jenny Web 0.6.2 — Web, plugin e MCP IT/EN
+
+## Pulizia e avvio fase login (0.6.2)
+
+Rimossi GUI Electron, installer Windows/macOS/Linux, sidecar Python, dipendenze e test desktop non utilizzati. Sono mantenuti solo i 15 servizi condivisi raggiungibili dalle dipendenze della webapp. Codice JavaScript formattato uniformemente, senza riscrittura in Python. La versione completa resta recuperabile dal tag `v0.6.1`.
+
+Avviata la fase login con un modulo account indipendente e testato: `LOGIN-WEB.md`. **La pagina login e l'isolamento multiutente non sono ancora attivati: l'accesso corrente resta con JENNY_TOKEN.** Nessuna migrazione o modifica dei dati dell'utente viene eseguita da questa release.
 
 Webapp di coding per Linux/Docker, derivata da [Jenny di SaltyPretz3l](https://github.com/SaltyPretz3l/jenny). Chat, workspace, editor e agente con approvazioni. Il runtime non usa Electron, VNC, Python o dipendenze npm esterne.
 
@@ -216,13 +222,13 @@ node --test web/test/*.test.cjs
 
 L'avvio senza Docker usa `127.0.0.1:3000`, `./web-data`, `./workspaces` e Ollama locale sulla porta 11434. Per caricare `.env`: `node --env-file=.env web/server.cjs`, adattando l'endpoint a `127.0.0.1` anziché al nome Docker. Il bind standalone è `HOST`; un bind di rete richiede il token.
 
-Non usare gli script npm nella radice: appartengono al prodotto desktop originale. Gli ingressi web sono in `web/`. Il formattatore è stato usato solo durante lo sviluppo, non è una dipendenza runtime.
+Dalla 0.6.2 gli script npm nella radice avviano e verificano esclusivamente la webapp (`npm start`, `npm test`). Prettier è la sola dipendenza di sviluppo: `npm ci` e `npm run format`. Non è una dipendenza runtime.
 
 ## Verifica e limiti
 
-La release ha **47 test superati** di integrazione su HTTP reale, filesystem temporaneo e provider simulati sia OpenAI SSE sia Ollama NDJSON. Sono verificati anche contesto, frammenti Unicode, tool in streaming, approvazioni, rifiuti, conflitti, stop e conservazione della cronologia.
+I risultati aggiornati della suite sono riportati in `VALIDAZIONE-WEB.md`. Sono verificati contesto, filesystem, streaming, approvazioni, rifiuti, conflitti, stop, cronologia, ricerca, MCP e la prima base account separata dal runtime corrente.
 
-**Non verificati qui:** avvio Docker, prestazioni/qualità di un modello reale, interazione in un browser e resa visuale sui dispositivi. Il runtime di test e l’immagine usano Node 24. Nessun URL pubblico è stato creato.
+Docker e worker sono verificati tramite CI, con evidenza per revisione in `VALIDAZIONE-WEB.md`. Restano da verificare prestazioni/qualità di un modello reale e flussi browser completi sui dispositivi. Il runtime di test e l'immagine usano Node 24.
 
 Limiti: un utente fidato e un processo Node per i dati; editor leggero; file di testo fino a 256 KiB; ricerca limitata a 400 file/100 cartelle/100 risultati GUI (40 per il tool)/3 secondi, massimo 5 corrispondenze di contenuto per file; 12 passaggi LLM e 8 tool per risposta. La ricerca ignora le directory di dipendenze/build più comuni e può segnalare risultati incompleti. Non è un IDE completo, un ambiente multiutente o una sandbox contro processi ostili sull'host. Niente terminale al modello, Git push/PR, MCP o download modelli dalla GUI. L’esecuzione di test è opzionale e manuale tramite il worker isolato.
 

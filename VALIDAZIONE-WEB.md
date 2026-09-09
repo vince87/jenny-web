@@ -1,4 +1,8 @@
-# Validazione Jenny Web 0.6.1
+# Validazione Jenny Web 0.6.2
+
+Pulizia e formattazione: suite locale su Node 24 con 60 test, 58 superati e 2 POSIX esclusi su Windows; zero fallimenti. Inclusi due test del nuovo componente account con hash reali e database temporanei. Login non collegato alle route: questi test non verificano ancora isolamento HTTP multiutente o GUI login. L'esito Docker della nuova revisione verrà riportato separatamente.
+
+## Evidenza storica 0.6.1
 
 2026-09-09: **58 test locali, 56 superati, 2 POSIX esclusi su Windows, zero fallimenti**. Quattro nuovi test coprono SearXNG/configurazione ambiente, parsing, rete e assenza di fallback. Richiesta read-only al SearXNG indicato: HTTP 200, JSON con 14 risultati. La raggiungibilità dal container sul server resta da verificare. Nessuna impostazione del server SearXNG è stata modificata.
 

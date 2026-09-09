@@ -19,7 +19,10 @@
     <script src="/activity-ui.js" defer></script>
     <script src="/extensions-ui.js" defer></script>
   </head>
-  <body data-view="chat"><a class="skip-link" href="#prompt" data-i18n="Vai al messaggio">Vai al messaggio</a>
+  <body data-view="chat">
+    <a class="skip-link" href="#prompt" data-i18n="Vai al messaggio"
+      >Vai al messaggio</a
+    >
     <header class="topbar">
       <a class="brand" href="/" aria-label="Jenny Web home"
         ><span class="brand-mark">j.</span>jenny<span class="brand-web"
@@ -41,7 +44,9 @@
         data-i18n-aria-label="Cambia tema"
       >
         ◐</button
-      ><button id="workbenchButton" data-i18n="Strumenti progetto">Strumenti progetto</button><button id="settingsButton" class="quiet" data-i18n="Connessione">
+      ><button id="workbenchButton" data-i18n="Strumenti progetto">
+        Strumenti progetto</button
+      ><button id="settingsButton" class="quiet" data-i18n="Connessione">
         Connessione
       </button>
     </header>
@@ -83,7 +88,22 @@
           ＋ Nuova conversazione
         </button>
         <div class="section-title" data-i18n="CONVERSAZIONI">CONVERSAZIONI</div>
-        <label class="sr-only" for="chatSearch" data-i18n="Cerca chat">Cerca chat</label><input id="chatSearch" type="search" maxlength="200" placeholder="Cerca chat" data-i18n-placeholder="Cerca chat"><label><input id="showArchived" type="checkbox"><span data-i18n="Chat archiviate">Chat archiviate</span></label><button id="archiveChat" data-i18n="Archivia / ripristina">Archivia / ripristina</button>
+        <label class="sr-only" for="chatSearch" data-i18n="Cerca chat"
+          >Cerca chat</label
+        ><input
+          id="chatSearch"
+          type="search"
+          maxlength="200"
+          placeholder="Cerca chat"
+          data-i18n-placeholder="Cerca chat"
+        /><label
+          ><input id="showArchived" type="checkbox" /><span
+            data-i18n="Chat archiviate"
+            >Chat archiviate</span
+          ></label
+        ><button id="archiveChat" data-i18n="Archivia / ripristina">
+          Archivia / ripristina
+        </button>
         <nav
           id="sessions"
           aria-label="Conversazioni"
@@ -135,7 +155,9 @@
             Esporta
           </button>
         </div>
-        <button id="extensionsButton" data-i18n="Plugin, Web e Terminale">Plugin, Web e Terminale</button>
+        <button id="extensionsButton" data-i18n="Plugin, Web e Terminale">
+          Plugin, Web e Terminale
+        </button>
         <div class="run-status">
           <span id="chatState" data-i18n="Pronto per iniziare"
             >Pronto per iniziare</span
@@ -203,7 +225,15 @@
             </div>
           </div>
         </div>
-        <div id="activity" class="streaming-message" role="status" hidden><span id="activityLabel"></span><details id="liveThinking" hidden><summary data-i18n="Thinking del modello">Thinking del modello</summary><pre id="liveThinkingText"></pre></details></div>
+        <div id="activity" class="streaming-message" role="status" hidden>
+          <span id="activityLabel"></span>
+          <details id="liveThinking" hidden>
+            <summary data-i18n="Thinking del modello">
+              Thinking del modello
+            </summary>
+            <pre id="liveThinkingText"></pre>
+          </details>
+        </div>
         <div id="partial" class="streaming-message" hidden>
           <span class="eyebrow" data-i18n="JENNY STA SCRIVENDO"
             >JENNY STA SCRIVENDO</span
@@ -225,7 +255,8 @@
             </div>
             <span class="spacer"></span><span id="diffCount"></span>
           </div>
-          <div id="batchChoices"></div><div class="review-tabs">
+          <div id="batchChoices"></div>
+          <div class="review-tabs">
             <button id="unifiedView" class="active" data-i18n="Modifiche">
               Modifiche</button
             ><button id="fullView" data-i18n="Prima / dopo">
@@ -252,7 +283,13 @@
             </button>
           </div>
         </section>
-        <div id="contextIndicator" role="status"><label for="contextProgress" data-i18n="Contesto stimato">Contesto stimato</label> <progress id="contextProgress" max="1" value="0"></progress><span id="contextDetails"></span></div>
+        <div id="contextIndicator" role="status">
+          <label for="contextProgress" data-i18n="Contesto stimato"
+            >Contesto stimato</label
+          >
+          <progress id="contextProgress" max="1" value="0"></progress
+          ><span id="contextDetails"></span>
+        </div>
         <form id="composer">
           <label class="sr-only" for="prompt" data-i18n="Messaggio a Jenny"
             >Messaggio a Jenny</label
@@ -263,8 +300,38 @@
             required
             data-i18n-placeholder="Cosa vuoi costruire o migliorare?"
           ></textarea>
-          <div class="attachment-controls"><label for="attachments" data-i18n="Allega testo">Allega testo</label><input id="attachments" type="file" multiple accept="text/*,.json,.js,.ts,.py,.md,.yaml,.yml,.css,.html,.csv,.txt"><button id="attachCurrent" type="button" data-i18n="Allega file aperto">Allega file aperto</button><div id="attachmentList"></div></div>
-          <div class="composer-bottom"><label class="sr-only" for="profile" data-i18n="Profilo Ollama">Profilo Ollama</label><select id="profile"><option value="server" data-i18n="Profilo server">Profilo server</option><option value="light" data-i18n="Leggero">Leggero</option><option value="balanced" data-i18n="Bilanciato">Bilanciato</option><option value="extended" data-i18n="Contesto esteso">Contesto esteso</option></select>
+          <div class="attachment-controls">
+            <label for="attachments" data-i18n="Allega testo"
+              >Allega testo</label
+            ><input
+              id="attachments"
+              type="file"
+              multiple
+              accept="text/*,.json,.js,.ts,.py,.md,.yaml,.yml,.css,.html,.csv,.txt"
+            /><button
+              id="attachCurrent"
+              type="button"
+              data-i18n="Allega file aperto"
+            >
+              Allega file aperto
+            </button>
+            <div id="attachmentList"></div>
+          </div>
+          <div class="composer-bottom">
+            <label class="sr-only" for="profile" data-i18n="Profilo Ollama"
+              >Profilo Ollama</label
+            ><select id="profile">
+              <option value="server" data-i18n="Profilo server">
+                Profilo server
+              </option>
+              <option value="light" data-i18n="Leggero">Leggero</option>
+              <option value="balanced" data-i18n="Bilanciato">
+                Bilanciato
+              </option>
+              <option value="extended" data-i18n="Contesto esteso">
+                Contesto esteso
+              </option>
+            </select>
             <label class="tool-toggle"
               ><input type="checkbox" id="useTools" checked /><span
                 data-i18n="Agente"
@@ -395,24 +462,71 @@
       </section>
     </main>
     <dialog id="extensionsDialog" aria-labelledby="extensionsTitle">
-      <h2 id="extensionsTitle" data-i18n="Plugin, Web e Terminale">Plugin, Web e Terminale</h2>
+      <h2 id="extensionsTitle" data-i18n="Plugin, Web e Terminale">
+        Plugin, Web e Terminale
+      </h2>
       <button id="extensionsClose" data-i18n="Chiudi">Chiudi</button>
       <button id="extensionsRefresh" data-i18n="Aggiorna">Aggiorna</button>
-      <div id="extensionsCatalog"></div><div id="extensionsInstalled"></div>
+      <div id="extensionsCatalog"></div>
+      <div id="extensionsInstalled"></div>
       <h3 data-i18n="Collega server MCP">Collega server MCP</h3>
-      <p data-i18n="MCP HTTP 2025-11-25. Ogni chiamata richiede approvazione.">MCP HTTP 2025-11-25. Ogni chiamata richiede approvazione.</p>
+      <p data-i18n="MCP HTTP 2025-11-25. Ogni chiamata richiede approvazione.">
+        MCP HTTP 2025-11-25. Ogni chiamata richiede approvazione.
+      </p>
       <form id="mcpInstallForm">
-        <label for="mcpName" data-i18n="Nome">Nome</label><input id="mcpName" required maxlength="80">
-        <label for="mcpURL">URL MCP</label><input id="mcpURL" type="url" required>
-        <label for="mcpToken">Bearer token (HTTPS)</label><input id="mcpToken" type="password" autocomplete="off">
-        <label><input id="mcpPrivate" type="checkbox"><span data-i18n="Consenti endpoint nella rete privata">Consenti endpoint nella rete privata</span></label>
+        <label for="mcpName" data-i18n="Nome">Nome</label
+        ><input id="mcpName" required maxlength="80" />
+        <label for="mcpURL">URL MCP</label
+        ><input id="mcpURL" type="url" required />
+        <label for="mcpToken">Bearer token (HTTPS)</label
+        ><input id="mcpToken" type="password" autocomplete="off" />
+        <label
+          ><input id="mcpPrivate" type="checkbox" /><span
+            data-i18n="Consenti endpoint nella rete privata"
+            >Consenti endpoint nella rete privata</span
+          ></label
+        >
         <button data-i18n="Installa">Installa</button>
       </form>
-      <h3>Web</h3><form id="webForm"><label for="webInput" data-i18n="Ricerca o URL">Ricerca o URL</label><input id="webInput" required maxlength="1000"><button data-i18n="Cerca / Apri">Cerca / Apri</button></form><pre id="webOutput"></pre><div id="webLinks"></div>
+      <h3>Web</h3>
+      <form id="webForm">
+        <label for="webInput" data-i18n="Ricerca o URL">Ricerca o URL</label
+        ><input id="webInput" required maxlength="1000" /><button
+          data-i18n="Cerca / Apri"
+        >
+          Cerca / Apri
+        </button>
+      </form>
+      <pre id="webOutput"></pre>
+      <div id="webLinks"></div>
       <p id="searchConfig"></p>
-      <form id="webKeyForm"><label for="webKey">Brave Search API key</label><input id="webKey" type="password" autocomplete="off"><button data-i18n="Salva">Salva</button></form>
-      <h3 data-i18n="Terminale">Terminale</h3><p data-i18n="Comandi nella copia temporanea del workspace, senza rete. Richiede il worker Docker.">Comandi nella copia temporanea del workspace, senza rete. Richiede il worker Docker.</p>
-      <form id="terminalForm"><label for="terminalCommand" data-i18n="Comando">Comando</label><textarea id="terminalCommand" required maxlength="4000" rows="3"></textarea><button data-i18n="Approva ed esegui">Approva ed esegui</button></form><button id="terminalRefresh" data-i18n="Aggiorna">Aggiorna</button><div id="terminalOutput"></div>
+      <form id="webKeyForm">
+        <label for="webKey">Brave Search API key</label
+        ><input id="webKey" type="password" autocomplete="off" /><button
+          data-i18n="Salva"
+        >
+          Salva
+        </button>
+      </form>
+      <h3 data-i18n="Terminale">Terminale</h3>
+      <p
+        data-i18n="Comandi nella copia temporanea del workspace, senza rete. Richiede il worker Docker."
+      >
+        Comandi nella copia temporanea del workspace, senza rete. Richiede il
+        worker Docker.
+      </p>
+      <form id="terminalForm">
+        <label for="terminalCommand" data-i18n="Comando">Comando</label
+        ><textarea
+          id="terminalCommand"
+          required
+          maxlength="4000"
+          rows="3"
+        ></textarea
+        ><button data-i18n="Approva ed esegui">Approva ed esegui</button>
+      </form>
+      <button id="terminalRefresh" data-i18n="Aggiorna">Aggiorna</button>
+      <div id="terminalOutput"></div>
       <pre id="mcpOutput"></pre>
     </dialog>
     <dialog id="settings">
@@ -479,18 +593,98 @@
         dall’editor.
       </p>
       <select id="historyVersions"></select>
-      <pre
-        id="historyPreview"
-      ></pre>
+      <pre id="historyPreview"></pre>
       <button id="historyLoad" data-i18n="Carica nell’editor">
         Carica nell’editor</button
       ><button id="historyClose" data-i18n="Chiudi">Chiudi</button>
     </dialog>
-  <dialog id="workbench" aria-labelledby="workbenchTitle"><header><h2 id="workbenchTitle" data-i18n="Strumenti progetto">Strumenti progetto</h2><button id="closeWorkbench" data-i18n="Chiudi">Chiudi</button></header>
-<nav class="workbench-tabs" aria-label="Strumenti" data-i18n-aria-label="Strumenti"><button data-panel="instructionsPanel" data-i18n="Istruzioni progetto">Istruzioni progetto</button><button data-panel="diagnosticsPanel" data-i18n="Diagnostica">Diagnostica</button><button data-panel="gitPanel">Git</button><button data-panel="runnerPanel" data-i18n="Test isolati">Test isolati</button><button data-panel="backupPanel" data-i18n="Backup ed export">Backup ed export</button></nav>
-<section id="instructionsPanel"><p data-i18n="JENNY.md guida i nuovi turni. Massimo 6000 caratteri.">JENNY.md guida i nuovi turni. Massimo 6000 caratteri.</p><label class="sr-only" for="projectInstructions" data-i18n="Istruzioni progetto">Istruzioni progetto</label><textarea id="projectInstructions" maxlength="6000" rows="12"></textarea><button id="saveInstructions" data-i18n="Salva istruzioni">Salva istruzioni</button></section>
-<section id="diagnosticsPanel" hidden><button id="runDiagnostics" data-i18n="Verifica configurazione">Verifica configurazione</button><div id="diagnosticsResult" role="status"></div></section>
-<section id="gitPanel" hidden><label for="gitAction" data-i18n="Vista Git">Vista Git</label><select id="gitAction"><option value="status" data-i18n="Stato">Stato</option><option value="diff" data-i18n="Modifiche">Modifiche</option><option value="staged" data-i18n="Modifiche in staging">Modifiche in staging</option><option value="log" data-i18n="Cronologia">Cronologia</option></select><button id="refreshGit" data-i18n="Aggiorna">Aggiorna</button><pre id="gitResult"></pre></section>
-<section id="runnerPanel" hidden><p data-i18n="Richiede il worker Docker sul server. Esegue una copia temporanea senza rete; il workspace resta invariato.">Richiede il worker Docker sul server. Esegue una copia temporanea senza rete; il workspace resta invariato.</p><label for="testRecipe" data-i18n="Test da eseguire">Test da eseguire</label><select id="testRecipe"><option value="node-test">Node — node --test</option><option value="python-compile">Python — compileall</option></select><button id="queueTest" data-i18n="Approva ed esegui">Approva ed esegui</button><button id="refreshTests" data-i18n="Aggiorna">Aggiorna</button><div id="testResults"></div></section>
-<section id="backupPanel" hidden><button id="exportAllChats" data-i18n="Esporta tutte le chat">Esporta tutte le chat</button><p data-i18n="Per il backup completo di file e dati, ferma Jenny e usa la procedura in BACKUP-WEB.md. Il ripristino crea una destinazione nuova.">Per il backup completo di file e dati, ferma Jenny e usa la procedura in BACKUP-WEB.md. Il ripristino crea una destinazione nuova.</p></section></dialog></body>
+    <dialog id="workbench" aria-labelledby="workbenchTitle">
+      <header>
+        <h2 id="workbenchTitle" data-i18n="Strumenti progetto">
+          Strumenti progetto
+        </h2>
+        <button id="closeWorkbench" data-i18n="Chiudi">Chiudi</button>
+      </header>
+      <nav
+        class="workbench-tabs"
+        aria-label="Strumenti"
+        data-i18n-aria-label="Strumenti"
+      >
+        <button data-panel="instructionsPanel" data-i18n="Istruzioni progetto">
+          Istruzioni progetto</button
+        ><button data-panel="diagnosticsPanel" data-i18n="Diagnostica">
+          Diagnostica</button
+        ><button data-panel="gitPanel">Git</button
+        ><button data-panel="runnerPanel" data-i18n="Test isolati">
+          Test isolati</button
+        ><button data-panel="backupPanel" data-i18n="Backup ed export">
+          Backup ed export
+        </button>
+      </nav>
+      <section id="instructionsPanel">
+        <p data-i18n="JENNY.md guida i nuovi turni. Massimo 6000 caratteri.">
+          JENNY.md guida i nuovi turni. Massimo 6000 caratteri.
+        </p>
+        <label
+          class="sr-only"
+          for="projectInstructions"
+          data-i18n="Istruzioni progetto"
+          >Istruzioni progetto</label
+        ><textarea
+          id="projectInstructions"
+          maxlength="6000"
+          rows="12"
+        ></textarea
+        ><button id="saveInstructions" data-i18n="Salva istruzioni">
+          Salva istruzioni
+        </button>
+      </section>
+      <section id="diagnosticsPanel" hidden>
+        <button id="runDiagnostics" data-i18n="Verifica configurazione">
+          Verifica configurazione
+        </button>
+        <div id="diagnosticsResult" role="status"></div>
+      </section>
+      <section id="gitPanel" hidden>
+        <label for="gitAction" data-i18n="Vista Git">Vista Git</label
+        ><select id="gitAction">
+          <option value="status" data-i18n="Stato">Stato</option>
+          <option value="diff" data-i18n="Modifiche">Modifiche</option>
+          <option value="staged" data-i18n="Modifiche in staging">
+            Modifiche in staging
+          </option>
+          <option value="log" data-i18n="Cronologia">Cronologia</option></select
+        ><button id="refreshGit" data-i18n="Aggiorna">Aggiorna</button>
+        <pre id="gitResult"></pre>
+      </section>
+      <section id="runnerPanel" hidden>
+        <p
+          data-i18n="Richiede il worker Docker sul server. Esegue una copia temporanea senza rete; il workspace resta invariato."
+        >
+          Richiede il worker Docker sul server. Esegue una copia temporanea
+          senza rete; il workspace resta invariato.
+        </p>
+        <label for="testRecipe" data-i18n="Test da eseguire"
+          >Test da eseguire</label
+        ><select id="testRecipe">
+          <option value="node-test">Node — node --test</option>
+          <option value="python-compile">Python — compileall</option></select
+        ><button id="queueTest" data-i18n="Approva ed esegui">
+          Approva ed esegui</button
+        ><button id="refreshTests" data-i18n="Aggiorna">Aggiorna</button>
+        <div id="testResults"></div>
+      </section>
+      <section id="backupPanel" hidden>
+        <button id="exportAllChats" data-i18n="Esporta tutte le chat">
+          Esporta tutte le chat
+        </button>
+        <p
+          data-i18n="Per il backup completo di file e dati, ferma Jenny e usa la procedura in BACKUP-WEB.md. Il ripristino crea una destinazione nuova."
+        >
+          Per il backup completo di file e dati, ferma Jenny e usa la procedura
+          in BACKUP-WEB.md. Il ripristino crea una destinazione nuova.
+        </p>
+      </section>
+    </dialog>
+  </body>
 </html>

@@ -1,9 +1,9 @@
-const { WORKSPACE_FS_ERROR_CODES } = require('./backend/error-codes');
+const { WORKSPACE_FS_ERROR_CODES } = require("./backend/error-codes");
 
 class WorkspaceFsError extends Error {
   constructor(code, message, details = {}) {
     super(message);
-    this.name = 'WorkspaceFsError';
+    this.name = "WorkspaceFsError";
     this.code = code;
     this.error_code = code;
     this.details = details;

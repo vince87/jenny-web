@@ -1,5 +1,10 @@
 # Third-Party Notices
 
+Jenny Web 0.6.2 retains Jenny's MIT attribution and only the shared workspace/tool services.
+The desktop-only components described below have been removed from the current source tree;
+their notices are retained here as historical provenance for the Git history and releases <= 0.6.1.
+The web runtime has no external npm or Python runtime dependencies.
+
 Jenny is licensed under the MIT License (see LICENSE).
 
 This repository vendors the following third-party code:
