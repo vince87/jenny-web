@@ -4,6 +4,8 @@ Ultimo aggiornamento: 2026-09-09 · Release di lavoro: **0.8.0**
 
 ## Plugin e ricerca 0.8.0
 
+CI Docker [34394123882](https://github.com/vince87/jenny-web/actions/runs/34394123882) riuscita su 860069f: 70/70 test, worker reale e Compose login/riavvio/persistenza. Supera il prossimo passo CI riportato sotto; rimane collaudo nuova GUI e modello reale sul server dell'utente.
+
 - JW-050 — Implementato: prompt dedicati, menzioni @ e ricerca esplicita prima della risposta, senza richiedere tool calling per la sola ricerca. Test con motore HTTP e modello simulati.
 - JW-051 — Implementato: stato catalogo, verifica connessioni, GUI strumenti/schema MCP e negoziazione versioni HTTP. Server MCP terzo e browser da collaudare.
 - JW-052 — Implementato: GitHub personale via gh, repository vincolato, letture e scritture limitate e approvate; test piani, credenziali e conflitti simulati. Chiamate GitHub remote da verificare.

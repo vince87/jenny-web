@@ -4,6 +4,8 @@ Suite locale: 70 test, 68 passati, 2 POSIX esclusi, zero fallimenti. Cinque nuov
 
 ## Evidenza storica 0.7.0
 
+Validazione Docker 0.8.0: [run 34394123882](https://github.com/vince87/jenny-web/actions/runs/34394123882), commit 860069f: 70/70 test passati, zero esclusi, build con gh installato, worker isolato e login/persistenza Compose prima e dopo riavvio riusciti. Restano non verificati nuova GUI interattiva, modelli reali e operazioni GitHub remote. Le revisioni successive aggiornano soltanto documentazione.
+
 Suite locale Node 24: **65 test, 63 superati, 2 POSIX esclusi su Windows, zero fallimenti**. Copertura aggiunta: primo avvio chiuso, cookie/CSRF/origine, tentativi login, isolamento A/B di file/chat/export/plugin/worker, revoca SSE, password/logout/disabilitazione/riavvio, recupero password e backup/ripristino completo multiutente. Una precedente esecuzione ha incontrato una porta effimera vietata da Fetch: corretto l'allocatore del fixture di integrazione; suite rieseguita.
 
 Browser desktop con dati fittizi locali: login admin IT, lista utenti, logout; login utente normale EN, assenza gestione utenti, logout. Layout login osservato. Non verificati cambio password/creazione utenti tramite interazione browser, mobile, più schede simultanee o flusso completo agente su modello reale: queste funzioni hanno controlli HTTP/statici dove indicato.
