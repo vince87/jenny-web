@@ -1,6 +1,8 @@
 # Validazione Jenny Web 0.6.2
 
-Pulizia e formattazione: suite locale su Node 24 con 60 test, 58 superati e 2 POSIX esclusi su Windows; zero fallimenti. Inclusi due test del nuovo componente account con hash reali e database temporanei. Login non collegato alle route: questi test non verificano ancora isolamento HTTP multiutente o GUI login. L'esito Docker della nuova revisione verrà riportato separatamente.
+Pulizia e formattazione: suite locale su Node 24 con 60 test, 58 superati e 2 POSIX esclusi su Windows; zero fallimenti. Inclusi due test del nuovo componente account con hash reali e database temporanei. Login non collegato alle route: questi test non verificano ancora isolamento HTTP multiutente o GUI login.
+
+[CI Docker 34374416759](https://github.com/vince87/jenny-web/actions/runs/34374416759), revisione `c3a5944`: **60 test eseguiti e superati, zero falliti/esclusi**, build, worker reale, Compose e persistenza riusciti. Formattazione verificata con `npm run format:check`. Le modifiche successive riguardano configurazione repository e documentazione, non logica applicativa.
 
 ## Evidenza storica 0.6.1
 
