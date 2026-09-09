@@ -16,6 +16,7 @@
     <script src="/editor-ui.js" defer></script>
     <script src="/workbench-ui.js" defer></script>
     <script src="/app.js" defer></script>
+    <script src="/plugin-intent.js" defer></script>
     <script src="/activity-ui.js" defer></script>
     <script src="/extensions-ui.js" defer></script>
     <script src="/auth-ui.js" defer></script>
@@ -160,6 +161,17 @@
         <button id="extensionsButton" data-i18n="Plugin, Web e Terminale">
           Plugin, Web e Terminale
         </button>
+        <div id="pluginSummary" role="status"></div>
+        <button id="mentionButton" type="button" data-i18n="@ Scegli plugin">
+          @ Scegli plugin
+        </button>
+        <div id="mentionMenu" hidden role="group" aria-label="Plugin"></div>
+        <label class="web-chat-option"
+          ><input id="chatWebSearch" type="checkbox" />
+          <span data-i18n="Ricerca web prima della risposta"
+            >Ricerca web prima della risposta</span
+          >
+        </label>
         <div class="run-status">
           <span id="chatState" data-i18n="Pronto per iniziare"
             >Pronto per iniziare</span
@@ -471,6 +483,67 @@
       <button id="extensionsRefresh" data-i18n="Aggiorna">Aggiorna</button>
       <div id="extensionsCatalog"></div>
       <div id="extensionsInstalled"></div>
+      <p
+        data-i18n="Attivo indica abilitato, non connessione verificata. Usa Verifica connessione."
+      >
+        Attivo indica abilitato, non connessione verificata. Usa Verifica
+        connessione.
+      </p>
+      <pre id="pluginCheckOutput"></pre>
+      <h3>GitHub</h3>
+      <form id="githubInstallForm">
+        <label for="githubRepository">Repository (owner/repo)</label
+        ><input id="githubRepository" required maxlength="140" />
+        <label for="githubToken" data-i18n="Token GitHub personale"
+          >Token GitHub personale</label
+        ><input id="githubToken" type="password" required autocomplete="off" />
+        <label
+          ><input id="githubWrite" type="checkbox" /><span
+            data-i18n="Consenti scritture GitHub su conferma"
+            >Consenti scritture GitHub su conferma</span
+          ></label
+        >
+        <button data-i18n="Collega GitHub">Collega GitHub</button>
+      </form>
+      <form id="githubActionForm">
+        <label for="githubAction" data-i18n="Operazione GitHub"
+          >Operazione GitHub</label
+        >
+        <select id="githubAction">
+          <option value="repo">Repository</option>
+          <option value="files">File</option>
+          <option value="issues">Issues</option>
+          <option value="issue">Issue</option>
+          <option value="prs">Pull requests</option>
+          <option value="pr">Pull request</option>
+          <option value="commits">Commits</option>
+          <option value="put_file" data-i18n="Pubblica file">
+            Pubblica file
+          </option>
+          <option value="create_branch" data-i18n="Crea branch">
+            Crea branch
+          </option>
+          <option value="create_issue" data-i18n="Crea issue">
+            Crea issue
+          </option>
+          <option value="comment" data-i18n="Aggiungi commento">
+            Aggiungi commento
+          </option>
+          <option value="create_pr" data-i18n="Crea pull request">
+            Crea pull request
+          </option>
+        </select>
+        <label
+          for="githubParameters"
+          data-i18n="Parametri JSON (modifica l’esempio)"
+          >Parametri JSON (modifica l’esempio)</label
+        >
+        <textarea id="githubParameters" rows="5" maxlength="15000">{}</textarea>
+        <button id="githubExecute" data-i18n="Rivedi ed esegui">
+          Rivedi ed esegui
+        </button>
+      </form>
+      <pre id="githubOutput"></pre>
       <h3 data-i18n="Collega server MCP">Collega server MCP</h3>
       <p data-i18n="MCP HTTP 2025-11-25. Ogni chiamata richiede approvazione.">
         MCP HTTP 2025-11-25. Ogni chiamata richiede approvazione.
@@ -530,6 +603,18 @@
       <button id="terminalRefresh" data-i18n="Aggiorna">Aggiorna</button>
       <div id="terminalOutput"></div>
       <pre id="mcpOutput"></pre>
+      <form id="mcpCallForm">
+        <label for="mcpToolSelect" data-i18n="Strumento MCP verificato"
+          >Strumento MCP verificato</label
+        ><select id="mcpToolSelect"></select>
+        <pre id="mcpToolSchema"></pre>
+        <label for="mcpArguments" data-i18n="Argomenti JSON"
+          >Argomenti JSON</label
+        ><textarea id="mcpArguments" rows="4" maxlength="14000">{}</textarea>
+        <button id="mcpExecute" data-i18n="Rivedi ed esegui">
+          Rivedi ed esegui
+        </button>
+      </form>
     </dialog>
     <dialog id="accountDialog">
       <h2 data-i18n="Account">Account</h2>

@@ -1,6 +1,14 @@
 # Jenny Web — roadmap operativa
 
-Ultimo aggiornamento: 2026-09-09 · Release di lavoro: **0.7.0**
+Ultimo aggiornamento: 2026-09-09 · Release di lavoro: **0.8.0**
+
+## Plugin e ricerca 0.8.0
+
+- JW-050 — Implementato: prompt dedicati, menzioni @ e ricerca esplicita prima della risposta, senza richiedere tool calling per la sola ricerca. Test con motore HTTP e modello simulati.
+- JW-051 — Implementato: stato catalogo, verifica connessioni, GUI strumenti/schema MCP e negoziazione versioni HTTP. Server MCP terzo e browser da collaudare.
+- JW-052 — Implementato: GitHub personale via gh, repository vincolato, letture e scritture limitate e approvate; test piani, credenziali e conflitti simulati. Chiamate GitHub remote da verificare.
+
+Suite locale: 70 test, 68 passati, 2 POSIX esclusi. Prossimo passo: CI Docker e collaudo GUI/modello reale; pubblicare archivio 0.8.0 dopo verifica. SearXNG raggiungibile da questo ambiente (5 risultati), ma ciò non verifica il container domestico. JW-045 resta aperto. Dettagli: PLUGINS-WEB.md.
 
 ## Pulizia e login locale (richiesta corrente)
 

@@ -6,12 +6,13 @@ class MCP {
   constructor(config) {
     this.config = config;
     this.session = null;
+    this.version = "2025-11-25";
   }
   async close() {
     if (!this.session) return;
     const headers = {
       "Mcp-Session-Id": this.session,
-      "MCP-Protocol-Version": "2025-11-25",
+      "MCP-Protocol-Version": this.version,
     };
     if (this.config.token)
       headers.Authorization = "Bearer " + this.config.token;
@@ -31,7 +32,7 @@ class MCP {
     const headers = {
       "Content-Type": "application/json",
       Accept: "application/json, text/event-stream",
-      "MCP-Protocol-Version": "2025-11-25",
+      "MCP-Protocol-Version": this.version,
     };
     if (this.config.token)
       headers.Authorization = "Bearer " + this.config.token;
@@ -99,12 +100,16 @@ class MCP {
       {
         protocolVersion: "2025-11-25",
         capabilities: {},
-        clientInfo: { name: "jenny-web", version: "0.6.0" },
+        clientInfo: {
+          name: "jenny-web",
+          version: require("./package.json").version,
+        },
       },
       signal,
     );
-    if (r.protocolVersion !== "2025-11-25")
-      throw Error("MCP server must support protocol 2025-11-25.");
+    if (!["2025-11-25", "2025-06-18", "2025-03-26"].includes(r.protocolVersion))
+      throw Error("MCP: versione protocollo non supportata.");
+    this.version = r.protocolVersion;
     await this.rpc("notifications/initialized", {}, signal, true);
   }
   async list(signal) {

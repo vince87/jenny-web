@@ -1,6 +1,63 @@
 "use strict";
+let githubConnection = null,
+  mcpDiscovered = [];
+let pluginState = null;
+const githubExamples = {
+  repo: {},
+  files: { path: "README.md", ref: "main" },
+  issues: {},
+  issue: { number: 1 },
+  prs: {},
+  pr: { number: 1 },
+  commits: {},
+  put_file: {
+    path: "example.txt",
+    branch: "your-branch",
+    content: "New file content",
+    message: "Update example",
+    sha: "",
+  },
+  create_branch: { branch: "your-branch", sha: "COPY_COMMIT_SHA" },
+  create_issue: { title: "Issue title", body: "Issue description" },
+  comment: { number: 1, body: "Comment" },
+  create_pr: {
+    title: "Pull request title",
+    body: "Description",
+    head: "your-branch",
+    base: "main",
+  },
+};
+const githubWrites = [
+  "put_file",
+  "create_branch",
+  "create_issue",
+  "comment",
+  "create_pr",
+];
 async function refreshExtensions() {
   const data = await api("/extensions");
+  pluginState = data;
+  paintMentionMenu();
+  githubConnection =
+    data.installed.find((i) => i.kind === "github" && i.enabled) || null;
+  $("githubActionForm").hidden = !githubConnection;
+  $("githubInstallForm").hidden = data.installed.some(
+    (i) => i.kind === "github",
+  );
+  $("pluginSummary").textContent = data.catalog
+    .map(
+      (item) =>
+        item.name +
+        ": " +
+        t(
+          item.state === "active"
+            ? "Attivo"
+            : item.state === "disabled"
+              ? "Disattivato"
+              : "Non installato",
+        ),
+    )
+    .join(" · ");
   $("searchConfig").textContent =
     t("Ricerca configurata in .env:") +
     " " +
@@ -12,10 +69,28 @@ async function refreshExtensions() {
     data.search.hasBraveKey;
   $("extensionsCatalog").replaceChildren();
   $("extensionsInstalled").replaceChildren();
-  for (const item of data.catalog.filter((i) => i.id !== "mcp")) {
-    const row = textNode("div", item.name + " ");
-    const button = textNode("button", t("Installa"));
-    button.disabled = data.installed.some((i) => i.id === item.id);
+  for (const item of data.catalog.filter(
+    (i) => !["mcp", "github"].includes(i.id),
+  )) {
+    const row = textNode(
+      "div",
+      item.name +
+        " · " +
+        t(
+          item.state === "active"
+            ? "Attivo"
+            : item.state === "disabled"
+              ? "Disattivato"
+              : "Non installato",
+        ),
+    );
+    const button = textNode(
+      "button",
+      t(item.canActivate === false ? "Solo amministratore." : "Installa"),
+    );
+    button.disabled =
+      item.canActivate === false ||
+      data.installed.some((i) => i.id === item.id);
     button.onclick = act(async () => {
       if (
         !confirm(
@@ -38,6 +113,55 @@ async function refreshExtensions() {
       "div",
       item.name + " · " + (item.enabled ? t("Attivo") : t("Disattivato")),
     );
+    if (item.repository)
+      row.append(
+        textNode(
+          "p",
+          item.repository +
+            " · " +
+            t(item.writeEnabled ? "Lettura e scrittura" : "Sola lettura"),
+        ),
+      );
+    row.append(
+      textNode(
+        "p",
+        item.lastCheck
+          ? t(item.lastCheck.ok ? "Verifica riuscita" : "Verifica fallita") +
+              " · " +
+              item.lastCheck.at
+          : t("Connessione non verificata"),
+      ),
+    );
+    if (item.enabled && item.kind !== "terminal") {
+      const check = textNode("button", t("Verifica connessione"));
+      check.onclick = act(async () => {
+        if (
+          !confirm(
+            t("Contattare il servizio per verificarlo?") +
+              "\n" +
+              (item.url ||
+                item.repository ||
+                data.search.endpoint ||
+                data.search.provider),
+          )
+        )
+          return;
+        check.disabled = true;
+        try {
+          const result = await api("/extensions/check", {
+            id: item.id,
+            confirmed: true,
+          });
+          $("pluginCheckOutput").textContent = JSON.stringify(result, null, 2);
+          if (item.kind === "mcp" && result.ok)
+            showMcpTools(item, result.tools);
+          await refreshExtensions();
+        } finally {
+          check.disabled = false;
+        }
+      });
+      row.append(check);
+    }
     for (const action of ["enable", "disable", "remove"]) {
       const button = textNode(
         "button",
@@ -73,6 +197,7 @@ async function refreshExtensions() {
           confirmed: true,
         });
         $("mcpOutput").textContent = r.result;
+        showMcpTools(item, JSON.parse(r.result));
       });
       row.append(discover);
     }
@@ -193,3 +318,182 @@ $("terminalForm").onsubmit = act(async (event) => {
   await refreshTerminal();
 });
 $("terminalRefresh").onclick = act(refreshTerminal);
+
+function showMcpTools(item, tools) {
+  mcpDiscovered = tools.map((tool) => ({
+    ...tool,
+    plugin: item.id,
+    pluginName: item.name,
+  }));
+  $("mcpToolSelect").replaceChildren();
+  for (const [index, tool] of mcpDiscovered.entries()) {
+    const option = textNode("option", item.name + " / " + tool.name);
+    option.value = String(index);
+    $("mcpToolSelect").append(option);
+  }
+  $("mcpToolSelect").onchange();
+}
+$("mcpToolSelect").onchange = () => {
+  const tool = mcpDiscovered[Number($("mcpToolSelect").value)];
+  $("mcpToolSchema").textContent = tool
+    ? JSON.stringify(tool.inputSchema, null, 2)
+    : "";
+};
+$("mcpCallForm").onsubmit = act(async (event) => {
+  event.preventDefault();
+  const tool = mcpDiscovered[Number($("mcpToolSelect").value)];
+  if (!tool) throw Error("Verifica prima un server MCP.");
+  const args = JSON.parse($("mcpArguments").value);
+  if (
+    !confirm(
+      t("Rivedi ed esegui") +
+        "\n" +
+        tool.pluginName +
+        " / " +
+        tool.name +
+        "\n" +
+        JSON.stringify(args, null, 2),
+    )
+  )
+    return;
+  $("mcpExecute").disabled = true;
+  try {
+    $("mcpOutput").textContent = (
+      await api("/extensions/execute", {
+        name: "mcp_call",
+        arguments: { plugin: tool.plugin, tool: tool.name, arguments: args },
+        workspace,
+        confirmed: true,
+      })
+    ).result;
+  } finally {
+    $("mcpExecute").disabled = false;
+  }
+});
+$("githubInstallForm").onsubmit = act(async (event) => {
+  event.preventDefault();
+  const repository = $("githubRepository").value.trim(),
+    writeEnabled = $("githubWrite").checked;
+  if (
+    !confirm(
+      t("Collegare questo repository GitHub?") +
+        "\n" +
+        repository +
+        "\n" +
+        t(writeEnabled ? "Lettura e scrittura" : "Sola lettura"),
+    )
+  )
+    return;
+  try {
+    await api("/extensions/install", {
+      kind: "github",
+      repository,
+      token: $("githubToken").value,
+      writeEnabled,
+      confirmed: true,
+    });
+    await refreshExtensions();
+  } finally {
+    $("githubToken").value = "";
+  }
+});
+$("githubAction").onchange = () => {
+  $("githubParameters").value = JSON.stringify(
+    githubExamples[$("githubAction").value],
+    null,
+    2,
+  );
+};
+let githubBusy = false;
+$("githubActionForm").onsubmit = act(async (event) => {
+  event.preventDefault();
+  if (githubBusy) return;
+  if (!githubConnection) throw Error("Collega e attiva GitHub.");
+  const action = $("githubAction").value,
+    parameters = JSON.parse($("githubParameters").value);
+  const writing = githubWrites.includes(action);
+  if (writing && !githubConnection.writeEnabled)
+    throw Error("GitHub: scrittura non abilitata.");
+  const args = { repository: githubConnection.repository, action, parameters };
+  if (
+    !confirm(
+      t(
+        writing
+          ? "Confermi la modifica su GitHub?"
+          : "Contattare questo repository GitHub?",
+      ) +
+        "\n" +
+        JSON.stringify(args, null, 2),
+    )
+  )
+    return;
+  githubBusy = true;
+  $("githubExecute").disabled = true;
+  try {
+    $("githubOutput").textContent = (
+      await api("/extensions/execute", {
+        name: writing ? "github_write" : "github_read",
+        arguments: args,
+        workspace,
+        confirmed: true,
+      })
+    ).result;
+  } finally {
+    githubBusy = false;
+    $("githubExecute").disabled = false;
+  }
+});
+async function ensureWebActive() {
+  await refreshExtensions();
+  const item = pluginState.installed.find((i) => i.kind === "web");
+  if (item?.enabled) return;
+  if (!confirm(t("Attivare il plugin Web per questa ricerca?")))
+    throw Error("Ricerca annullata.");
+  if (item)
+    await api("/extensions/manage", {
+      id: item.id,
+      action: "enable",
+      confirmed: true,
+    });
+  else await api("/extensions/install", { kind: "web", confirmed: true });
+  await refreshExtensions();
+}
+function paintMentionMenu() {
+  $("mentionMenu").replaceChildren();
+  for (const item of pluginState?.catalog || []) {
+    const button = textNode(
+      "button",
+      "@" +
+        item.id +
+        " · " +
+        t(
+          item.state === "active"
+            ? "Attivo"
+            : item.state === "disabled"
+              ? "Disattivato"
+              : "Non installato",
+        ),
+    );
+    button.type = "button";
+    button.disabled = item.canActivate === false;
+    button.onclick = () => {
+      const input = $("prompt"),
+        prefix = input.value.slice(0, input.selectionStart),
+        suffix = input.value.slice(input.selectionEnd);
+      input.value = prefix.replace(/@\w*$/, "") + "@" + item.id + " " + suffix;
+      $("mentionMenu").hidden = true;
+      input.focus();
+      if (item.state !== "active")
+        notice(t("Configura o attiva il plugin nel pannello Plugin."));
+    };
+    $("mentionMenu").append(button);
+  }
+}
+$("mentionButton").onclick = act(async () => {
+  await refreshExtensions();
+  $("mentionMenu").hidden = !$("mentionMenu").hidden;
+});
+$("prompt").addEventListener("input", () => {
+  const before = $("prompt").value.slice(0, $("prompt").selectionStart);
+  $("mentionMenu").hidden = !/(?:^|\s)@\w*$/.test(before);
+});

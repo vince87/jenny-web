@@ -354,6 +354,7 @@ async function initialize() {
     }
   }
   await Promise.all([listFiles(), listSessions()]);
+  await refreshExtensions();
   render();
   api("/models")
     .then(({ models }) => {
@@ -414,6 +415,8 @@ $("composer").onsubmit = act(async (e) => {
   e.preventDefault();
   const content = $("prompt").value.trim();
   if (!content || sending) return;
+  const intent = JennyPluginIntent.analyze(content);
+  const webSearch = $("chatWebSearch").checked || intent.webSearch;
   sending = true;
   paintActivity();
   $("prompt").readOnly = true;
@@ -421,9 +424,15 @@ $("composer").onsubmit = act(async (e) => {
   const current = workspace,
     ticket = sessionLoad,
     model = $("model").value.trim(),
-    useTools = $("useTools").checked;
+    useTools = $("useTools").checked || intent.mentions.length > 0;
   let target = session;
   try {
+    if (webSearch) await ensureWebActive();
+    if (
+      webSearch &&
+      !confirm(t("Inviare questa richiesta al web?") + "\n" + intent.query)
+    )
+      return;
     if (!target)
       target = await api("/sessions", {
         workspace: current,
@@ -436,6 +445,8 @@ $("composer").onsubmit = act(async (e) => {
       language: locale.language,
       profile: $("profile").value,
       attachments: currentAttachments(),
+      webSearch,
+      webConfirmed: webSearch,
     });
     if (workspace === current && sessionLoad === ticket) {
       clearAttachments();

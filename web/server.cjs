@@ -130,6 +130,7 @@ async function createApp(options = {}) {
           "/login": "login.html",
           "/login.js": "login.js",
           "/auth-ui.js": "auth-ui.js",
+          "/plugin-intent.js": "plugin-intent.js",
           "/app.js": "app.js",
           "/activity-ui.js": "activity-ui.js",
           "/extensions-ui.js": "extensions-ui.js",
@@ -250,6 +251,14 @@ async function createApp(options = {}) {
         return json(extensions.install(body), 201);
       if (route === "/api/extensions/manage" && method === "POST")
         return json(extensions.manage(body));
+      if (route === "/api/extensions/check" && method === "POST")
+        return json(
+          await extensions.check(
+            body.id,
+            body.confirmed,
+            AbortSignal.timeout(60000),
+          ),
+        );
       if (route === "/api/extensions/web" && method === "POST")
         return json(extensions.configureWeb(body));
       if (route === "/api/extensions/execute" && method === "POST") {
@@ -464,7 +473,7 @@ async function createApp(options = {}) {
               s,
               input.content,
               body.model,
-              body.useTools,
+              input.pluginMentions.length > 0 ? true : body.useTools,
               body.language,
               input,
             );

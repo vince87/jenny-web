@@ -1,4 +1,6 @@
-# Jenny Web 0.7.0 — Login locale, Web, plugin e MCP IT/EN
+# Jenny Web 0.8.0 — Plugin richiamabili con @ e ricerca esplicita
+
+Nuovi prompt dedicati ai plugin, menu `@`, ricerca prima della risposta con `@web` o «cerca…», stato e verifica connessioni, strumenti MCP con schema e GitHub personale via `gh`. Vedere [PLUGINS-WEB.md](PLUGINS-WEB.md). Per aggiornare il container è necessaria una nuova build; il server domestico non viene modificato automaticamente.
 
 ## Pulizia e avvio fase login (0.6.2)
 

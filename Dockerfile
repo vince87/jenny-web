@@ -1,6 +1,6 @@
 FROM node:24-bookworm-slim
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000 DATA_DIR=/data WORKSPACES_DIR=/workspaces
-RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends git gh && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --chown=node:node services ./services
 COPY --chown=node:node web ./web

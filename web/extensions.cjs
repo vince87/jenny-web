@@ -4,7 +4,20 @@ const path = require("node:path");
 const { randomUUID } = require("node:crypto");
 const { readPage, request } = require("./network.cjs");
 const { MCP } = require("./mcp.cjs");
+const {
+  GitHub,
+  plan: githubPlan,
+  repository,
+  token: githubToken,
+} = require("./github.cjs");
 const CATALOG = [
+  {
+    id: "github",
+    name: "GitHub",
+    description:
+      "Repository GitHub personale: lettura e scritture approvate tramite gh.",
+    kind: "builtin",
+  },
   {
     id: "web",
     name: "Web",
@@ -27,6 +40,26 @@ const CATALOG = [
   },
 ];
 const SCHEMAS = [
+  [
+    "github_read",
+    "Read the configured GitHub repository. Actions: repo, files (path/ref optional), issues, issue (number), prs, pr (number), commits. Requires approval.",
+    {
+      repository: { type: "string" },
+      action: { type: "string" },
+      parameters: { type: "object" },
+    },
+    ["repository", "action", "parameters"],
+  ],
+  [
+    "github_write",
+    "Write to the configured GitHub repository after human approval. Actions: put_file (path, branch, content, message, sha from previous read when updating); create_branch (branch, sha); create_issue (title, body); comment (number, body); create_pr (title, body, head, base). No deletion, merge or workflow writes.",
+    {
+      repository: { type: "string" },
+      action: { type: "string" },
+      parameters: { type: "object" },
+    },
+    ["repository", "action", "parameters"],
+  ],
   [
     "web_search",
     "Search public web pages. Requires approval.",
@@ -88,7 +121,18 @@ class Extensions {
   }
   list() {
     return {
-      catalog: CATALOG.filter((x) => this.privileged || x.id !== "terminal"),
+      catalog: CATALOG.map((x) => {
+        const entries = this.items.filter((i) => i.kind === x.id);
+        return {
+          ...x,
+          canActivate: this.privileged || x.id !== "terminal",
+          state: entries.some((i) => i.enabled)
+            ? "active"
+            : entries.length
+              ? "disabled"
+              : "not-installed",
+        };
+      }),
       search: this.search.view(),
       installed: this.items.map(({ token, ...item }) => ({
         ...item,
@@ -104,7 +148,7 @@ class Extensions {
       throw Error("Solo amministratore.");
     if (body.confirmed !== true)
       throw Error("Confirm plugin permissions before installing.");
-    if (!["web", "terminal", "mcp"].includes(body.kind))
+    if (!["web", "terminal", "mcp", "github"].includes(body.kind))
       throw Error("Unsupported plugin format.");
     let item;
     if (body.kind === "mcp") {
@@ -144,6 +188,12 @@ class Extensions {
       if (this.items.some((i) => i.id === body.kind))
         throw Error("Plugin already installed.");
       item = { id: body.kind, kind: body.kind, name: body.kind, enabled: true };
+      if (body.kind === "github")
+        Object.assign(item, {
+          repository: repository(body.repository),
+          token: githubToken(body.token),
+          writeEnabled: body.writeEnabled === true,
+        });
     }
     if (this.items.length >= 20) throw Error("Maximum 20 plugins.");
     this.items.push(item);
@@ -163,6 +213,13 @@ class Extensions {
     return this.list();
   }
   available(name) {
+    if (name.startsWith("github_"))
+      return this.items.some(
+        (i) =>
+          i.kind === "github" &&
+          i.enabled &&
+          (name !== "github_write" || i.writeEnabled),
+      );
     if (!this.privileged && name.startsWith("terminal_")) return false;
     return name.startsWith("web_")
       ? this.items.some((i) => i.id === "web" && i.enabled)
@@ -213,6 +270,12 @@ class Extensions {
         throw Error("Invalid extension argument: " + key);
     if (JSON.stringify(args).length > 16000)
       throw Error("Extension arguments too large.");
+    if (name.startsWith("github_"))
+      githubPlan(
+        this.items.find((i) => i.kind === "github" && i.enabled),
+        args,
+        name === "github_write",
+      );
     if (
       name.startsWith("mcp_") &&
       !this.items.some(
@@ -223,6 +286,19 @@ class Extensions {
   }
   async execute(name, args, workspace, signal) {
     this.validate(name, args);
+    if (name.startsWith("github_")) {
+      const item = this.items.find((i) => i.kind === "github" && i.enabled);
+      const result = await new GitHub(item).execute(
+        args,
+        name === "github_write",
+        signal,
+      );
+      return {
+        repository: item.repository,
+        result: JSON.stringify(result).slice(0, 16000),
+        untrusted: true,
+      };
+    }
     if (name === "web_read") return readPage(args.url, signal);
     if (name === "web_search") {
       if (!args.query.trim() || args.query.length > 300)
@@ -311,6 +387,63 @@ class Extensions {
     item.token = token;
     this.save();
     return this.list();
+  }
+  async check(id, confirmed, signal) {
+    if (confirmed !== true)
+      throw Error("Explicit execution confirmation required.");
+    const item = this.items.find((i) => i.id === id);
+    if (!item?.enabled) throw Error("Plugin unavailable or disabled.");
+    let detail;
+    try {
+      if (item.kind === "web") {
+        const result = await this.execute(
+          "web_search",
+          { query: "SearXNG documentation" },
+          "",
+          signal,
+        );
+        detail = { ok: true, results: result.links?.length || 0 };
+      } else if (item.kind === "mcp") {
+        this.validate("mcp_tools", { plugin: id });
+        const client = new MCP(item);
+        let tools;
+        try {
+          tools = await client.list(signal);
+        } finally {
+          await client.close();
+        }
+        detail = {
+          ok: true,
+          tools: tools.map((t) => ({
+            name: t.name,
+            description: String(t.description || "").slice(0, 300),
+            inputSchema: t.inputSchema,
+          })),
+        };
+      } else if (item.kind === "github") {
+        await this.execute(
+          "github_read",
+          { repository: item.repository, action: "repo", parameters: {} },
+          "",
+          signal,
+        );
+        detail = { ok: true };
+      } else
+        throw Error(
+          "Il terminale richiede il worker; la connessione non è verificabile da questo pannello.",
+        );
+    } catch (error) {
+      detail = { ok: false, error: error.message };
+    }
+    if (this.items.includes(item)) {
+      item.lastCheck = {
+        ok: detail.ok,
+        at: new Date().toISOString(),
+        error: detail.error || null,
+      };
+      this.save();
+    }
+    return { ...detail, at: new Date().toISOString() };
   }
 }
 module.exports = { Extensions, SCHEMAS };

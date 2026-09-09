@@ -1,4 +1,8 @@
-# Validazione Jenny Web 0.7.0
+# Validazione Jenny Web 0.8.0
+
+Suite locale: 70 test, 68 passati, 2 POSIX esclusi, zero fallimenti. Cinque nuovi test per intenti/menzioni, ricerca HTTP prima del modello testuale, GitHub (repository, ambiti, SHA, credenziali e conflitti) e MCP HTTP negoziato con discovery/schema. Corretto il fixture porte: accetta anche porte effimere basse purché non vietate da Fetch. Formattazione verificata. Provider e operazioni GitHub simulati: nuova GUI, modello reale, server MCP terzo e chiamate gh remote non ancora collaudati. Evidenze Docker precedenti non valgono come prova della 0.8.0.
+
+## Evidenza storica 0.7.0
 
 Suite locale Node 24: **65 test, 63 superati, 2 POSIX esclusi su Windows, zero fallimenti**. Copertura aggiunta: primo avvio chiuso, cookie/CSRF/origine, tentativi login, isolamento A/B di file/chat/export/plugin/worker, revoca SSE, password/logout/disabilitazione/riavvio, recupero password e backup/ripristino completo multiutente. Una precedente esecuzione ha incontrato una porta effimera vietata da Fetch: corretto l'allocatore del fixture di integrazione; suite rieseguita.
 

@@ -30,6 +30,23 @@ async function prepareTurn(agent, s, body) {
   const instructions = await agent.workspaces.instructions(s.workspace);
   if (typeof body.content !== "string" || !body.content.trim())
     throw new Error("Messaggio richiesto.");
+  const intent = require("./public/plugin-intent.js").analyze(body.content);
+  const webSearch = body.webSearch === true || intent.webSearch;
+  for (const kind of intent.mentions) {
+    if (
+      !agent.extensions?.items.some(
+        (item) => item.kind === kind && item.enabled,
+      )
+    )
+      throw Error("Plugin @" + kind + " non attivo: apri il pannello Plugin.");
+  }
+  if (webSearch) {
+    if (body.webConfirmed !== true) throw Error("Conferma la ricerca web.");
+    if (!agent.extensions?.available("web_search"))
+      throw Error("Attiva il plugin Web dal pannello Plugin.");
+    if (intent.query.length > 300)
+      throw Error("Ricerca web: domanda di massimo 300 caratteri.");
+  }
   const content =
     body.content +
     (parts.length
@@ -39,6 +56,11 @@ async function prepareTurn(agent, s, body) {
   if (content.length > 16000)
     throw new Error("Messaggio e allegati oltre 16.000 caratteri.");
   return {
+    webSearchPending: webSearch ? intent.query : null,
+    pluginMentions: intent.mentions,
+    directWebAnswer:
+      webSearch && !intent.mentions.some((kind) => kind !== "web"),
+    webSources: [],
     content,
     profile,
     projectInstructions: instructions?.content || "",
