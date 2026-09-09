@@ -1,4 +1,4 @@
-# Jenny Web 0.6.0 — Web, plugin e MCP IT/EN
+# Jenny Web 0.6.1 — Web, plugin e MCP IT/EN
 
 Webapp di coding per Linux/Docker, derivata da [Jenny di SaltyPretz3l](https://github.com/SaltyPretz3l/jenny). Chat, workspace, editor e agente con approvazioni. Il runtime non usa Electron, VNC, Python o dipendenze npm esterne.
 
@@ -6,9 +6,36 @@ Webapp di coding per Linux/Docker, derivata da [Jenny di SaltyPretz3l](https://g
 
 ## Novità 0.6
 
+### Ricerca SearXNG dal file `.env` (0.6.1)
+
+Nel `.env` di Jenny aggiungi o aggiorna queste variabili, senza sostituire token e impostazioni già presenti:
+
+```dotenv
+WEB_SEARCH_PROVIDER=searxng
+SEARXNG_BASE_URL=http://192.168.10.250:8081
+SEARXNG_ALLOW_PRIVATE=true
+```
+
+Poi `docker compose up -d --build` e ricarica la pagina. Installa/attiva **Web** nel catalogo se non è già attivo. La GUI mostra il provider configurato e non richiede Brave quando è selezionato SearXNG. Le ricerche approvate vanno esclusivamente al SearXNG configurato; nessun fallback automatico verso Brave o DuckDuckGo in caso di errore.
+
+`SEARXNG_BASE_URL` è l'indirizzo base (senza `/search`), anche con sottopercorso. `SEARXNG_ALLOW_PRIVATE=true` consente soltanto il contatto con quell'endpoint amministrativo: non sblocca link web privati o redirect. Se l'indirizzo cambia basta modificare `.env` e ricreare il container. Lo script iniziale copia i valori da `.env.example` solo per una nuova installazione: non modifica i `.env` già esistenti.
+
+SearXNG deve consentire `json` in `search.formats` del proprio `settings.yml`; se serve, aggiungilo alla sezione `search` esistente (senza duplicarla) e riavvia SearXNG:
+
+```yaml
+search:
+  formats:
+    - html
+    - json
+```
+
+Un formato non abilitato può produrre HTTP 403: [documentazione API SearXNG](https://docs.searxng.org/dev/search_api.html). Jenny segnala esplicitamente errori HTTP e risposte non JSON. Non modifica il tuo SearXNG.
+
+Alternative in `.env`: `WEB_SEARCH_PROVIDER=brave` con `BRAVE_SEARCH_API_KEY`, oppure `duckduckgo`. `auto` mantiene il comportamento 0.6 (Brave se c'è una chiave, altrimenti DuckDuckGo). La chiave in ambiente prevale su quella legacy salvata dalla GUI; le chiavi non sono restituite dall'API. Compose lascia `auto` alle installazioni senza nuove variabili per non cambiarne implicitamente il motore.
+
 La chat mostra subito l'attesa del modello, poi thinking (se trasmesso da Ollama) e scrittura, con tempo trascorso. **Plugin, Web e Terminale** apre il catalogo locale: installazione, attivazione, disattivazione e rimozione delle integrazioni.
 
-- **Web:** lettura testuale di URL pubblici e navigazione dei link, senza eseguire JavaScript. Ricerca con Brave Search: installa Web e salva la tua API key nel pannello. Senza chiave si tenta DuckDuckGo HTML, che può bloccare richieste automatiche; non è garantito. La chiave non viene restituita al browser o al modello.
+- **Web:** lettura testuale di URL pubblici e navigazione dei link, senza eseguire JavaScript. Dalla 0.6.1 la ricerca usa il provider scelto nel `.env`, incluso SearXNG; Brave e DuckDuckGo rimangono alternative.
 - **MCP:** aggiungi nome, URL Streamable HTTP e, se necessario, bearer token (solo HTTPS). Protocollo supportato: 2025-11-25; discovery e chiamata degli strumenti, anche con risposte SSE. Gli endpoint LAN richiedono consenso esplicito. OAuth, stdio, risorse e prompt MCP non sono implementati.
 - **Terminale:** comandi batch approvati, eseguiti dal worker Docker separato nella copia temporanea del workspace, senza rete e senza modificare l'originale. Installare il plugin non avvia il worker: seguire `RUNNER-WEB.md`. Non è un terminale interattivo PTY.
 - Il modello vede solo le integrazioni abilitate, con **Agente** acceso. Ogni chiamata esterna richiede revisione e approvazione; il contenuto remoto è contrassegnato come non fidato. Disabilitare un plugin impedisce le nuove esecuzioni ma non annulla azioni già inviate.

@@ -161,7 +161,7 @@ async function createApp(options = {}) {
           ollama: agent.provider.settings || null,
           model: agent.model,
           baseURL: agent.baseURL,
-          version: "0.6.0",
+          version: require('./package.json').version,
           profiles: PROFILES,
           streaming: agent.provider.streaming,
           tools: [...agent.registry.getToolSchemas(), ...extensions.schemas()].map((t) => t.function.name),

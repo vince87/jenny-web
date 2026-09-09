@@ -1,6 +1,8 @@
 'use strict';
 async function refreshExtensions(){
   const data=await api('/extensions');
+  $('searchConfig').textContent=t('Ricerca configurata in .env:')+' '+data.search.provider+(data.search.endpoint?' · '+data.search.endpoint:'');
+  $('webKeyForm').hidden=data.search.provider==='searxng'||data.search.provider==='duckduckgo'||data.search.hasBraveKey;
   $('extensionsCatalog').replaceChildren();$('extensionsInstalled').replaceChildren();
   for(const item of data.catalog.filter(i=>i.id!=='mcp')) {
     const row=textNode('div',item.name+' ');

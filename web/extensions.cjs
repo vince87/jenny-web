@@ -14,9 +14,9 @@ const SCHEMAS=[
  ['terminal_status','Read the result of an approved terminal job.',{id:{type:'string'}},['id']],
 ];
 class Extensions {
- constructor(dataDir,runner){this.file=path.join(dataDir,'extensions.json');this.runner=runner;this.items=fs.existsSync(this.file)?JSON.parse(fs.readFileSync(this.file,'utf8')):[];}
+ constructor(dataDir,runner,env=process.env){this.search=new (require('./search.cjs').SearchConfig)(env);this.file=path.join(dataDir,'extensions.json');this.runner=runner;this.items=fs.existsSync(this.file)?JSON.parse(fs.readFileSync(this.file,'utf8')):[];}
  save(){const temp=this.file+'.'+randomUUID();fs.writeFileSync(temp,JSON.stringify(this.items),{mode:0o600,flag:'wx'});fs.renameSync(temp,this.file);}
- list(){return {catalog:CATALOG,installed:this.items.map(({token,...item})=>({...item,hasToken:!!token}))};}
+ list(){return {catalog:CATALOG,search:this.search.view(),installed:this.items.map(({token,...item})=>({...item,hasToken:!!token}))};}
  install(body){
   if(body.confirmed!==true)throw Error('Confirm plugin permissions before installing.');
   if(!['web','terminal','mcp'].includes(body.kind))throw Error('Unsupported plugin format.');
@@ -51,8 +51,10 @@ class Extensions {
   if(name==='web_read')return readPage(args.url,signal);
   if(name==='web_search'){
     if(!args.query.trim()||args.query.length>300)throw Error('Query required (max 300).');
-    const key=this.items.find(i=>i.id==='web')?.token || process.env.BRAVE_SEARCH_API_KEY;
-    if(key){
+    if(this.search.provider==='searxng')return this.search.searxng(args.query,signal);
+    const key=this.search.braveKey || this.items.find(i=>i.id==='web')?.token;
+    if(this.search.provider==='brave'&&!key)throw Error('Set BRAVE_SEARCH_API_KEY in .env.');
+    if(key&&this.search.provider!=='duckduckgo'){
       const r=await request('https://api.search.brave.com/res/v1/web/search?q='+encodeURIComponent(args.query)+'&count=5',{signal,headers:{Accept:'application/json','X-Subscription-Token':key}});
       if(r.status!==200)throw Error('Search provider HTTP '+r.status);
       const data=JSON.parse(r.text);const links=(data.web?.results||[]).slice(0,5).map(x=>({title:String(x.title).slice(0,200),url:String(x.url).slice(0,2000),description:String(x.description||'').slice(0,1000)}));

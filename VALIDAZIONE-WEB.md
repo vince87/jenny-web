@@ -1,4 +1,8 @@
-# Validazione Jenny Web 0.6.0
+# Validazione Jenny Web 0.6.1
+
+2026-09-09: **58 test locali, 56 superati, 2 POSIX esclusi su Windows, zero fallimenti**. Quattro nuovi test coprono SearXNG/configurazione ambiente, parsing, rete e assenza di fallback. Richiesta read-only al SearXNG indicato: HTTP 200, JSON con 14 risultati. La raggiungibilità dal container sul server resta da verificare. Nessuna impostazione del server SearXNG è stata modificata.
+
+## Validazione precedente 0.6.0
 
 2026-09-09, Windows / Node 24.14.0: **54 test, 52 superati, 2 POSIX esclusi, zero fallimenti**. Test plugin, revoca e approvazioni, MCP HTTP JSON/SSE/paginazione/cleanup, isolamento terminale, protezioni URL e indicatore thinking.
 

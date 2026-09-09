@@ -1,5 +1,6 @@
 {
   "it": {
+    "Ricerca configurata in .env:": "Ricerca configurata in .env:",
     "Jenny Web — Il tuo coding workspace": "Jenny Web — Il tuo coding workspace",
     "Connessione…": "Connessione…",
     "Cambia tema": "Cambia tema",
@@ -315,6 +316,7 @@
     "Ricerca e lettura di pagine pubbliche; ogni richiesta richiede approvazione.": "Ricerca e lettura di pagine pubbliche; ogni richiesta richiede approvazione."
   },
   "en": {
+    "Ricerca configurata in .env:": "Search configured in .env:",
     "Jenny Web — Il tuo coding workspace": "Jenny Web — Your coding workspace",
     "Connessione…": "Connecting…",
     "Cambia tema": "Change theme",

@@ -18,6 +18,10 @@ services:
       LLM_MODEL: "${LLM_MODEL:-}"
       LLM_API_KEY: "${LLM_API_KEY:-}"
       LLM_TIMEOUT_MS: "${LLM_TIMEOUT_MS:-300000}"
+      WEB_SEARCH_PROVIDER: "${WEB_SEARCH_PROVIDER:-auto}"
+      SEARXNG_BASE_URL: "${SEARXNG_BASE_URL:-}"
+      SEARXNG_ALLOW_PRIVATE: "${SEARXNG_ALLOW_PRIVATE:-false}"
+      BRAVE_SEARCH_API_KEY: "${BRAVE_SEARCH_API_KEY:-}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

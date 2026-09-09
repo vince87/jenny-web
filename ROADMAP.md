@@ -1,6 +1,10 @@
 # Jenny Web — roadmap operativa
 
-Ultimo aggiornamento: 2026-09-09 · Release di lavoro: **0.6.0**
+Ultimo aggiornamento: 2026-09-09 · Release di lavoro: **0.6.1**
+
+## Aggiornamento SearXNG 0.6.1
+
+JW-041: provider, endpoint SearXNG, consenso LAN e chiave Brave configurabili da `.env` e inoltrati da Compose. Template con `http://192.168.10.250:8081`; nessuna sovrascrittura dei `.env` esistenti. SearXNG esplicito non ripiega su altri provider; endpoint fisso e redirect rifiutati, protezioni di web_read preservate. Test HTTP dedicati: encoding query, risultati limitati, credenziali escluse dallo stato, errori JSON/403, LAN opt-in. Prossimo passo: verificare il container aggiornato sul server dell'utente.
 
 ## Tranche 0.6 richiesta dall'utente
 
