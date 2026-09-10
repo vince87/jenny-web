@@ -40,14 +40,13 @@ async function refreshExtensions() {
   $("pluginToggles").replaceChildren();
   for (const entry of data.catalog) {
     const items = data.installed.filter((i) => i.kind === entry.id);
-    const button = textNode(
-      "button",
-      entry.name + " · " + (entry.state === "active" ? "ON" : "OFF"),
-    );
-    button.type = "button";
-    button.setAttribute("aria-pressed", String(entry.state === "active"));
+    const row = textNode("label", "");
+    const button = document.createElement("input");
+    button.type = "checkbox";
+    button.checked = entry.state === "active";
     button.disabled = entry.canActivate === false;
     button.onclick = act(async () => {
+      button.checked = entry.state === "active";
       if (!items.length && ["github", "mcp"].includes(entry.id)) {
         $("extensionsDialog").showModal();
         return;
@@ -62,7 +61,14 @@ async function refreshExtensions() {
           });
       await refreshExtensions();
     });
-    $("pluginToggles").append(button);
+    row.append(
+      button,
+      textNode(
+        "span",
+        entry.name + " · " + (entry.state === "active" ? "ON" : "OFF"),
+      ),
+    );
+    $("pluginToggles").append(row);
   }
   paintMentionMenu();
   githubConnection =

@@ -86,7 +86,7 @@ class OllamaProvider extends LocalProvider {
         .map(() => "Una verifica Ollama non è disponibile."),
     };
   }
-  async generate(body, signal, onDelta) {
+  async generate(body, signal, onDelta = () => {}) {
     // One inference at a time from this Jenny instance: avoid competing loads/KV caches.
     const previous = this.gate;
     let release;

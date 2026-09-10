@@ -1,0 +1,8 @@
+# Jenny Web 0.9.1
+
+- Scelta della ricerca nel normale tool calling, senza inferenza preliminare per ogni messaggio.
+- Callback Ollama opzionale: corretti i falsi errori di connessione nelle chiamate interne senza streaming UI.
+- Limiti ricerca/pagine e rifiuto query duplicate; fonti e stato dalle operazioni reali.
+- Menu a discesa dei plugin accanto al modello, con caselle ON/OFF.
+
+75 test locali: 73 passati, due POSIX esclusi su Windows. Test con provider simulati, non collaudo Gemma4 reale. Codice consegnato con commit/push GitHub; nessuno ZIP richiesto.

@@ -202,8 +202,29 @@ test("Explicit web chat searches before a text-only model and records real sourc
         ],
       };
     modelCalls++;
+    if (modelCalls === 1)
+      return {
+        choices: [
+          {
+            message: {
+              role: "assistant",
+              content: null,
+              tool_calls: [
+                {
+                  id: "search-normal",
+                  type: "function",
+                  function: {
+                    name: "web_search",
+                    arguments: '{"query":"young yng prezzo"}',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      };
     assert.equal(requests.length, 1);
-    assert.equal(payload.tools, undefined);
+    assert.ok(payload.tools.some((t) => t.function.name === "web_search"));
     assert.match(
       JSON.stringify(payload.messages),
       /https:\/\/example.org\/quote/,
@@ -223,7 +244,7 @@ test("Explicit web chat searches before a text-only model and records real sourc
   while (app.agent.controllers.size)
     await new Promise((r) => setTimeout(r, 10));
   assert.equal(s.status, "idle", s.error);
-  assert.equal(modelCalls, 1);
+  assert.equal(modelCalls, 2);
   assert.equal(s.webSources[0].url, "https://example.org/quote");
   assert.equal(s.events.at(-1).name, "web_search");
   assert.equal(s.messages[0].content, body.content);
@@ -231,6 +252,19 @@ test("Explicit web chat searches before a text-only model and records real sourc
   assert.equal((await app.extensions.check("web", true)).ok, true);
   const check = app.extensions.list().installed[0].lastCheck;
   assert.equal(check.ok, true);
+  let greetings = 0;
+  app.agent.provider.generate = async (payload) => {
+    greetings++;
+    assert.ok(payload.tools.some((t) => t.function.name === "web_search"));
+    assert.ok(!payload.messages[0].content.includes("web research planner"));
+    return { choices: [{ message: { role: "assistant", content: "Ciao!" } }] };
+  };
+  const greeting = await prepareTurn(app.agent, s, { content: "ciao" });
+  app.agent.send(s, greeting.content, "fixture", false, "it", greeting);
+  while (app.agent.controllers.size)
+    await new Promise((r) => setTimeout(r, 10));
+  assert.equal(greetings, 1);
+  assert.equal(s.status, "idle", s.error);
   let step = 0;
   app.extensions.execute = async (name) => {
     assert.equal(name, "web_read");

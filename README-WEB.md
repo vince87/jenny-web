@@ -1,4 +1,6 @@
-# Jenny Web 0.9.0 — Ricerca iterativa, memoria e laboratorio
+# Jenny Web 0.9.1 — Tool calling diretto e menu plugin
+
+Dalla 0.9.1 non c'è più una chiamata preliminare per decidere se cercare: il modello risponde o chiama gli strumenti nel normale turno. Serve supporto tool calling. Il menu Plugin è vicino al modello; Web ON autorizza ricerche e letture senza conferme, Web OFF le blocca. Limiti: tre query diverse e cinque pagine per turno. Corretta la callback Ollama che poteva provocare un falso errore di connessione. Le descrizioni del planner delle versioni precedenti sotto sono storiche.
 
 Pulsanti plugin ON/OFF nella chat. Web acceso autorizza ricerche/letture senza conferme ripetute: il modello formula e rivaluta fino a tre query, anche senza @; i risultati tecnici non modificano il messaggio utente. Memoria e compressione: [MEMORY-WEB.md](MEMORY-WEB.md). Ambiente Python/Node persistente: [LAB-WEB.md](LAB-WEB.md), con build e worker separati obbligatori.
 

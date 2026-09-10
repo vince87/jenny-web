@@ -9,6 +9,30 @@ const { LocalProvider } = require("../provider.cjs");
 const { OllamaProvider } = require("../ollama.cjs");
 const { budgetContext } = require("../context.cjs");
 const { createApp } = require("../server.cjs");
+test("Ollama accepts an omitted delta callback and preserves internal TypeErrors", async (t) => {
+  const baseURL = await endpoint(t, (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(
+      JSON.stringify(
+        req.url === "/api/show"
+          ? { capabilities: ["tools"] }
+          : { message: { role: "assistant", content: "hello" }, done: true },
+      ),
+    );
+  });
+  const provider = new OllamaProvider({ baseURL, streaming: false });
+  const reply = await provider.generate(
+    { model: "fixture", messages: [{ role: "user", content: "ciao" }] },
+    new AbortController().signal,
+  );
+  assert.equal(reply.choices[0].message.content, "hello");
+  const internal = new TypeError("callback is not a function");
+  assert.equal(provider.error(internal), internal);
+  assert.match(
+    provider.error(new TypeError("fetch failed")).message,
+    /Endpoint LLM/,
+  );
+});
 const { diff, highlight } = require("../public/presentation.js");
 async function endpoint(t, handler) {
   const s = http.createServer(handler);

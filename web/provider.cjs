@@ -59,7 +59,7 @@ class LocalProvider {
     if (e.name === "TimeoutError")
       return new Error("Timeout del modello locale.");
     if (e.name === "AbortError") return new Error("Generazione fermata.");
-    if (e instanceof TypeError)
+    if (e instanceof TypeError && e.message === "fetch failed")
       return new Error(
         "Endpoint LLM non raggiungibile. Controlla indirizzo, porta e rete Docker.",
       );

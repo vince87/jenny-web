@@ -1,4 +1,8 @@
-# Validazione Jenny Web 0.9.0
+# Validazione Jenny Web 0.9.1
+
+75 test locali: 73 passati, 2 POSIX esclusi. Nuova regressione callback Ollama omessa; test una generazione per saluto con Web attivo, tool search/read automatici senza planner, schemi Web disponibili senza Agente coding. Nessuna prova sul modello Gemma4 reale. La CI precedente 0.9 [34446288101](https://github.com/vince87/jenny-web/actions/runs/34446288101) è riuscita; non attribuirla alla 0.9.1.
+
+## Evidenza storica 0.9.0
 
 La nuova CI Docker non è stata avviata: push bloccato in attesa di autorizzazione esplicita alla destinazione GitHub. Docker non disponibile nell'ambiente locale. Il laboratorio è quindi implementato e testato a livello di argomenti/isolamento, ma la sua esecuzione Docker e persistenza reale non sono ancora verificate. ZIP locale, non release GitHub.
 

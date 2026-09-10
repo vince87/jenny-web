@@ -12,5 +12,5 @@ La roadmap è il registro canonico di lavoro svolto, verifiche mancanti e prossi
 - Comando di verifica: `node --test web/test/*.test.cjs`. Eseguire controlli aggiuntivi solo per rischi concreti. I test simulati dei provider non verificano modelli reali.
 - Non indicare come collaudati Docker, GPU, browser o modelli se la prova non è stata eseguita. Separare implementato da verificato nella roadmap.
 - Aggiornare la roadmap per ID a fine lavoro, aggiungendo evidenza e stato reale; indicare sempre il prossimo passo concreto.
-- Aggiornare versione, note di release e validazione. Conservare un archivio completo della nuova release finché non sarà disponibile il repository dell'utente.
+- Aggiornare versione, note di release e validazione. Consegna richiesta dall'utente: commit e push su vince87/jenny-web, verifica CI; niente ZIP salvo richiesta esplicita.
 - Non includere `.env`, credenziali, directory dati/workspace o dipendenze scaricate negli archivi sorgenti.

@@ -327,27 +327,6 @@ class Agent {
     s.pending = null;
   }
   async run(s, signal) {
-    if (s.webPlanPending) {
-      s.webPlanPending = false;
-      const results = await require("./web-plan.cjs").research(
-        this.provider,
-        this.extensions,
-        s,
-        signal,
-        (phase) => {
-          s.phase = phase;
-          this.save(s);
-        },
-      );
-      s.webReference = results.length
-        ? JSON.stringify(results.slice().reverse())
-        : null;
-      s.webSources = results.flatMap((r) => r.sources);
-      s.directWebAnswer =
-        results.length > 0 &&
-        !(s.pluginMentions || []).some((kind) => kind !== "web");
-      this.save(s);
-    }
     while (true) {
       signal.throwIfAborted();
       while (s.queue.length) {
@@ -362,6 +341,24 @@ class Agent {
             const args = JSON.parse(call.function.arguments);
             this.extensions.validate(name, args);
             if (["web_search", "web_read"].includes(name)) {
+              if (name === "web_search") {
+                s.webQueries ||= [];
+                const query = args.query.trim().toLowerCase();
+                if (s.webQueries.length >= 3 || s.webQueries.includes(query))
+                  throw Error(
+                    "Search limit reached or duplicate query; answer using available evidence.",
+                  );
+                s.webQueries.push(query);
+              } else {
+                s.webReads ||= 0;
+                if (s.webReads >= 5)
+                  throw Error(
+                    "Page limit reached; answer using available evidence.",
+                  );
+                s.webReads++;
+              }
+              s.phase = "searching-web";
+              this.save(s);
               result = await this.extensions.execute(
                 name,
                 args,
@@ -369,12 +366,21 @@ class Agent {
                 signal,
               );
               signal.throwIfAborted();
+              s.webSources = [...(s.webSources || []), ...(result.links || [])]
+                .filter((x, i, a) => a.findIndex((y) => y.url === x.url) === i)
+                .slice(0, 25);
               s.messages.push({
                 role: "tool",
                 tool_call_id: call.id,
                 content: JSON.stringify(result),
               });
-              s.events.push({ name, ok: true, at: new Date().toISOString() });
+              s.events.push({
+                name,
+                query: args.query,
+                url: args.url,
+                ok: true,
+                at: new Date().toISOString(),
+              });
               s.queue.shift();
               this.save(s);
               continue;
@@ -393,7 +399,7 @@ class Agent {
             this.save(s);
             return;
           }
-          if (!this.registry.getTool(name))
+          if (!s.useTools || !this.registry.getTool(name))
             throw new Error("Tool non disponibile.");
           const a = JSON.parse(call.function.arguments);
           if (
@@ -623,11 +629,14 @@ class Agent {
         this.provider.settings || {},
         s.profile || "server",
       );
-      const toolsEnabled = s.useTools && !s.directWebAnswer;
+      const toolsEnabled =
+        s.useTools || this.extensions?.available("web_search");
       const schemas = toolsEnabled
         ? [
-            ...this.registry.getToolSchemas(),
-            ...(this.extensions?.schemas() || []),
+            ...(s.useTools ? this.registry.getToolSchemas() : []),
+            ...(this.extensions?.schemas() || []).filter(
+              (t) => s.useTools || t.function.name.startsWith("web_"),
+            ),
           ]
         : undefined;
       const compressed = await require("./memory.cjs").compact(

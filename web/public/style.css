@@ -1410,6 +1410,39 @@ footer a {
   padding: 8px;
   flex-shrink: 0;
 }
+#pluginDropdown {
+  position: relative;
+  flex-shrink: 0;
+}
+#pluginDropdown summary {
+  cursor: pointer;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+#pluginDropdown #pluginToggles {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  min-width: 210px;
+  max-height: 280px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg, #20282c);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  z-index: 30;
+  padding: 12px;
+  box-shadow: 0 8px 24px #0006;
+}
+#pluginDropdown label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 5px;
+}
 .chat-plugin-controls {
   display: flex;
   flex-wrap: wrap;

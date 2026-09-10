@@ -1,6 +1,14 @@
 # Jenny Web — roadmap operativa
 
-Ultimo aggiornamento: 2026-09-10 · Release di lavoro: **0.9.0**
+Ultimo aggiornamento: 2026-09-10 · Release di lavoro: **0.9.1**
+
+## Tranche 0.9.1
+
+- JW-056 — Implementato: ricerca attraverso tool calling nel turno normale, senza planner preliminare. Saluti: una generazione. Callback Ollama opzionale e TypeError interni non mascherati da errori di rete.
+- JW-057 — Implementato: massimo tre ricerche differenti e cinque letture per turno, fonti e avanzamento dalle chiamate effettive; niente conferme per Web. Plugin Web disponibile anche con Agente coding spento, senza concedere tool filesystem.
+- JW-058 — Implementato: menu plugin a discesa vicino al modello, caselle ON/OFF e nessuna fila di pulsanti individuali sopra la chat.
+
+Suite locale: 75 test, 73 passati e 2 POSIX esclusi. Prossimo passo: CI e collaudo Gemma4 dell'utente. Consegna solo GitHub, niente ZIP. La precedente 0.9 è stata pubblicata e la CI [34446288101](https://github.com/vince87/jenny-web/actions/runs/34446288101) è riuscita: supera le vecchie note di blocco sotto.
 
 ## Tranche 0.9
 

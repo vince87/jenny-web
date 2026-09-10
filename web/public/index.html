@@ -30,7 +30,7 @@
         ><span class="brand-mark">j.</span>jenny<span class="brand-web"
           >web</span
         ></a
-      ><span class="release">PREVIEW / 0.9</span><span class="spacer"></span
+      ><span class="release">PREVIEW / 0.9.1</span><span class="spacer"></span
       ><label class="sr-only" for="language" data-i18n="Lingua">Lingua</label
       ><select id="language" aria-label="Lingua" data-i18n-aria-label="Lingua">
         <option value="it">Italiano</option>
@@ -163,7 +163,6 @@
             Plugin, Web e Terminale
           </button>
           <div id="pluginSummary" role="status" hidden></div>
-          <div id="pluginToggles" aria-label="Plugin"></div>
           <button id="memoryButton" data-i18n="Memoria progetto">
             Memoria progetto
           </button>
@@ -366,8 +365,12 @@
               placeholder="Seleziona modello"
               autocomplete="off"
               data-i18n-placeholder="Seleziona modello"
-            /><datalist id="models"></datalist
-            ><button
+            /><datalist id="models"></datalist>
+            <details id="pluginDropdown">
+              <summary>Plugin ▾</summary>
+              <div id="pluginToggles" aria-label="Plugin"></div>
+            </details>
+            <button
               class="primary send"
               id="send"
               type="submit"

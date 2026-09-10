@@ -53,7 +53,9 @@ async function prepareTurn(agent, s, body) {
   if (content.length > 16000)
     throw new Error("Messaggio e allegati oltre 16.000 caratteri.");
   return {
-    webPlanPending: !!agent.extensions?.available("web_search"),
+    webPlanPending: false,
+    webQueries: [],
+    webReads: 0,
     forceWeb: webSearch,
     webSearchPending: null,
     webReference: null,
