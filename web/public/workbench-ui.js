@@ -51,6 +51,9 @@ function paintWorkbenchState() {
   if (u)
     $("contextDetails").textContent +=
       ` · ${t("Token input misurati")}: ${u.prompt_tokens}`;
+  if (c?.compactedMessages)
+    $("contextDetails").textContent +=
+      ` · ${t("Messaggi riassunti")}: ${c.compactedMessages}`;
 }
 function paintBatch(p) {
   $("batchChoices").replaceChildren();

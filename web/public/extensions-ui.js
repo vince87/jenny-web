@@ -37,6 +37,33 @@ const githubWrites = [
 async function refreshExtensions() {
   const data = await api("/extensions");
   pluginState = data;
+  $("pluginToggles").replaceChildren();
+  for (const entry of data.catalog) {
+    const items = data.installed.filter((i) => i.kind === entry.id);
+    const button = textNode(
+      "button",
+      entry.name + " · " + (entry.state === "active" ? "ON" : "OFF"),
+    );
+    button.type = "button";
+    button.setAttribute("aria-pressed", String(entry.state === "active"));
+    button.disabled = entry.canActivate === false;
+    button.onclick = act(async () => {
+      if (!items.length && ["github", "mcp"].includes(entry.id)) {
+        $("extensionsDialog").showModal();
+        return;
+      }
+      if (!items.length)
+        await api("/extensions/install", { kind: entry.id, confirmed: true });
+      else
+        for (const item of items)
+          await api("/extensions/manage", {
+            id: item.id,
+            action: entry.state === "active" ? "disable" : "enable",
+          });
+      await refreshExtensions();
+    });
+    $("pluginToggles").append(button);
+  }
   paintMentionMenu();
   githubConnection =
     data.installed.find((i) => i.kind === "github" && i.enabled) || null;
@@ -132,10 +159,11 @@ async function refreshExtensions() {
           : t("Connessione non verificata"),
       ),
     );
-    if (item.enabled && item.kind !== "terminal") {
+    if (item.enabled && !["terminal", "sandbox"].includes(item.kind)) {
       const check = textNode("button", t("Verifica connessione"));
       check.onclick = act(async () => {
         if (
+          item.kind !== "web" &&
           !confirm(
             t("Contattare il servizio per verificarlo?") +
               "\n" +
@@ -238,7 +266,6 @@ $("mcpInstallForm").onsubmit = act(async (event) => {
 });
 async function browseWeb(value) {
   const name = /^https?:\/\//i.test(value) ? "web_read" : "web_search";
-  if (!confirm(t("Inviare questa richiesta al web?") + "\n" + value)) return;
   $("webOutput").textContent = t("Caricamento…");
   $("webLinks").replaceChildren();
   try {
@@ -277,7 +304,8 @@ async function refreshTerminal() {
   if (workspace !== current) return;
   $("terminalOutput").replaceChildren();
   for (const job of jobs.filter(
-    (j) => j.workspace === current && j.recipe === "terminal",
+    (j) =>
+      j.workspace === current && ["terminal", "sandbox"].includes(j.recipe),
   )) {
     const row = document.createElement("details");
     row.open = true;
@@ -302,7 +330,9 @@ $("terminalForm").onsubmit = act(async (event) => {
   if (
     !confirm(
       t(
-        "Eseguire il codice del progetto in un container temporaneo senza rete?",
+        $("useLab").checked
+          ? "Eseguire nel laboratorio persistente? La rete dipende dal worker."
+          : "Eseguire il codice del progetto in un container temporaneo senza rete?",
       ) +
         "\n" +
         command,
@@ -310,7 +340,7 @@ $("terminalForm").onsubmit = act(async (event) => {
   )
     return;
   await api("/extensions/execute", {
-    name: "terminal_run",
+    name: $("useLab").checked ? "sandbox_run" : "terminal_run",
     arguments: { command },
     workspace,
     confirmed: true,
@@ -497,3 +527,37 @@ $("prompt").addEventListener("input", () => {
   const before = $("prompt").value.slice(0, $("prompt").selectionStart);
   $("mentionMenu").hidden = !/(?:^|\s)@\w*$/.test(before);
 });
+let memoryRevision = null,
+  memoryWorkspace = null;
+$("memoryButton").onclick = act(async () => {
+  memoryWorkspace = workspace;
+  const value = await api(
+    "/memory?workspace=" + encodeURIComponent(memoryWorkspace),
+  );
+  memoryRevision = value.revision;
+  $("memoryContent").value = value.content;
+  $("memoryEnabled").checked = value.enabled;
+  $("memoryDialog").showModal();
+});
+$("memorySave").onclick = act(async () => {
+  const value = await api("/memory", {
+    workspace: memoryWorkspace,
+    content: $("memoryContent").value,
+    enabled: $("memoryEnabled").checked,
+    revision: memoryRevision,
+  });
+  memoryRevision = value.revision;
+  $("memoryDialog").close();
+});
+$("memoryClear").onclick = act(async () => {
+  const value = await api("/memory", {
+    workspace: memoryWorkspace,
+    content: "",
+    enabled: false,
+    revision: memoryRevision,
+  });
+  memoryRevision = value.revision;
+  $("memoryContent").value = "";
+  $("memoryEnabled").checked = false;
+});
+$("memoryClose").onclick = () => $("memoryDialog").close();

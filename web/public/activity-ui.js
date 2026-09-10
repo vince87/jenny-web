@@ -4,13 +4,17 @@ function paintActivity() {
   $("activity").hidden = !active;
   if (!active) return;
   const label =
-    session?.phase === "searching-web"
-      ? "Ricerca sul web in corso…"
-      : session?.phase === "thinking"
-        ? "Il modello sta pensando…"
-        : session?.phase === "writing"
-          ? "Jenny sta scrivendo…"
-          : "In attesa del modello…";
+    session?.phase === "planning-web"
+      ? "Valuto la ricerca…"
+      : session?.phase === "compacting"
+        ? "Comprimo il contesto…"
+        : session?.phase === "searching-web"
+          ? "Ricerca sul web in corso…"
+          : session?.phase === "thinking"
+            ? "Il modello sta pensando…"
+            : session?.phase === "writing"
+              ? "Jenny sta scrivendo…"
+              : "In attesa del modello…";
   const seconds = session?.startedAt
     ? Math.max(
         0,

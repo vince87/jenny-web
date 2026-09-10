@@ -262,7 +262,10 @@ async function createApp(options = {}) {
       if (route === "/api/extensions/web" && method === "POST")
         return json(extensions.configureWeb(body));
       if (route === "/api/extensions/execute" && method === "POST") {
-        if (body.confirmed !== true)
+        if (
+          body.confirmed !== true &&
+          !["web_search", "web_read"].includes(body.name)
+        )
           throw Error("Explicit execution confirmation required.");
         await workspaces.service(body.workspace);
         return json(
@@ -338,6 +341,21 @@ async function createApp(options = {}) {
             body.content,
             body.revision,
           ),
+        );
+      }
+      if (route === "/api/memory" && ["GET", "POST"].includes(method)) {
+        const project =
+          method === "GET" ? url.searchParams.get("workspace") : body.workspace;
+        await workspaces.service(project);
+        return json(
+          method === "GET"
+            ? agent.memory.get(project)
+            : agent.memory.set(
+                project,
+                body.content,
+                body.revision,
+                body.enabled,
+              ),
         );
       }
       if (route === "/api/models" && method === "GET")

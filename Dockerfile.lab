@@ -1,0 +1,6 @@
+FROM node:24-bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv python3-pip git gh ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /lab && chown 1000:1000 /lab
+USER 1000:1000
+WORKDIR /lab
+ENV HOME=/lab/.home

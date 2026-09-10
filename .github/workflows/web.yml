@@ -23,7 +23,11 @@ jobs:
           docker cp jenny-ci-node-runtime:/usr/local/bin/node "$RUNNER_TEMP/jenny-node24"
           docker rm jenny-ci-node-runtime
           "$RUNNER_TEMP/jenny-node24" web/scripts/runner-smoke.cjs
-      - name: Compose health and persistent volumes
+      - name: Persistent development lab
+        run: |
+          docker build -f Dockerfile.lab -t jenny-lab:local .
+          "$RUNNER_TEMP/jenny-node24" web/scripts/lab-smoke.cjs
+      - name: Compose login and persistence
         run: |
           docker compose build jenny-web
           docker compose run --rm --no-deps -T -e JENNY_CI_SMOKE=1 -v "$PWD/web/test/compose-smoke.cjs:/ci-test.cjs:ro" --entrypoint node jenny-web /ci-test.cjs init

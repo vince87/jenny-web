@@ -150,6 +150,53 @@ async function fixture(t) {
 test("Multi-user HTTP: login, CSRF, ownership of files/chats/exports/plugins and worker separation", async (t) => {
   const x = await fixture(t),
     { a, b, request } = x;
+  assert.equal((await request("/api/memory?workspace=principale")).status, 401);
+  const savedMemory = await request(
+    "/api/memory",
+    {
+      workspace: "principale",
+      content: "Private project A",
+      revision: null,
+      enabled: true,
+    },
+    a,
+  );
+  assert.equal(savedMemory.status, 200);
+  assert.equal(
+    (await request("/api/memory?workspace=principale", undefined, b)).body
+      .content,
+    "",
+  );
+  assert.equal(
+    (await request("/api/memory?workspace=principale", undefined, a)).body
+      .content,
+    "Private project A",
+  );
+  assert.notEqual(
+    (
+      await request(
+        "/api/memory",
+        {
+          workspace: "principale",
+          content: "stale",
+          revision: null,
+          enabled: true,
+        },
+        a,
+      )
+    ).status,
+    200,
+  );
+  assert.notEqual(
+    (
+      await request(
+        "/api/extensions/install",
+        { kind: "sandbox", confirmed: true },
+        b,
+      )
+    ).status,
+    200,
+  );
   assert.equal((await request("/api/config")).status, 401);
   assert.equal(
     (

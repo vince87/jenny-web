@@ -6,7 +6,7 @@ const path = require("node:path");
 const { spawn, execFile } = require("node:child_process");
 const { promisify } = require("node:util");
 const { RECIPES } = require("../runner.cjs");
-const { randomUUID } = require("node:crypto");
+const { randomUUID, createHash } = require("node:crypto");
 function jobRoot(root, job) {
   if (job.owner === undefined) return root; // Standalone smoke tests; HTTP always sends owner.
   if (
@@ -22,11 +22,12 @@ function dockerArgs(root, job, name) {
   root = jobRoot(root, job);
   if (
     !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/.test(job.workspace) ||
-    (!Object.hasOwn(RECIPES, job.recipe) && job.recipe !== "terminal")
+    (!Object.hasOwn(RECIPES, job.recipe) &&
+      !["terminal", "sandbox"].includes(job.recipe))
   )
     throw Error("Invalid job");
   if (
-    job.recipe === "terminal" &&
+    ["terminal", "sandbox"].includes(job.recipe) &&
     (typeof job.command !== "string" ||
       !job.command.trim() ||
       job.command.length > 4000 ||
@@ -38,6 +39,48 @@ function dockerArgs(root, job, name) {
       ? { image: "node:24-bookworm-slim", command: ["sh", "-c", job.command] }
       : RECIPES[job.recipe];
   if (root.includes(",")) throw Error("Unsupported workspace root");
+  if (job.recipe === "sandbox") {
+    const volume =
+      "jenny-lab-" +
+      createHash("sha256")
+        .update(path.resolve(root, job.workspace))
+        .digest("hex")
+        .slice(0, 32);
+    return [
+      "run",
+      "--rm",
+      "--pull=never",
+      "--name",
+      name,
+      "--network=" +
+        (process.env.JENNY_LAB_NETWORK === "bridge" ? "bridge" : "none"),
+      "--read-only",
+      "--cap-drop=ALL",
+      "--security-opt=no-new-privileges",
+      "--pids-limit=128",
+      "--memory=1g",
+      "--memory-swap=1g",
+      "--cpus=1",
+      "--user=1000:1000",
+      "--tmpfs",
+      "/tmp:rw,nosuid,nodev,size=128m,mode=1777",
+      "--mount",
+      `type=bind,src=${path.join(root, job.workspace)},dst=/source,readonly`,
+      "--mount",
+      `type=volume,src=${volume},dst=/lab`,
+      "--workdir=/lab",
+      "--env",
+      "HOME=/lab/.home",
+      "jenny-lab:local",
+      "timeout",
+      "55s",
+      "sh",
+      "-c",
+      'if [ ! -f .jenny-initialized ]; then mkdir -p project .home && cp -R /source/. project/ && touch .jenny-initialized || exit 1; fi; cd project && exec sh -c "$1"',
+      "lab",
+      job.command,
+    ];
+  }
   return [
     "run",
     "--rm",

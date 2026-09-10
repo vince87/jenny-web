@@ -12,6 +12,13 @@ const {
 } = require("./github.cjs");
 const CATALOG = [
   {
+    id: "sandbox",
+    name: "Lab",
+    description:
+      "Ambiente di sviluppo persistente e isolato; richiede worker Docker.",
+    kind: "builtin",
+  },
+  {
     id: "github",
     name: "GitHub",
     description:
@@ -21,8 +28,7 @@ const CATALOG = [
   {
     id: "web",
     name: "Web",
-    description:
-      "Ricerca e lettura di pagine pubbliche; ogni richiesta richiede approvazione.",
+    description: "Web acceso autorizza ricerca e lettura di pagine pubbliche.",
     kind: "builtin",
   },
   {
@@ -40,6 +46,18 @@ const CATALOG = [
   },
 ];
 const SCHEMAS = [
+  [
+    "sandbox_run",
+    "Run an approved shell command in the persistent project lab (Python/venv, Node, Git, gh). Originals are read-only, copied once. Dependencies and edits persist in a separate Docker volume. No automatic publishing, host credentials or write-back. Network disabled unless worker administrator enables it. 55 second limit. Use sandbox_status afterwards.",
+    { command: { type: "string" } },
+    ["command"],
+  ],
+  [
+    "sandbox_status",
+    "Read an approved lab job result.",
+    { id: { type: "string" } },
+    ["id"],
+  ],
   [
     "github_read",
     "Read the configured GitHub repository. Actions: repo, files (path/ref optional), issues, issue (number), prs, pr (number), commits. Requires approval.",
@@ -62,13 +80,13 @@ const SCHEMAS = [
   ],
   [
     "web_search",
-    "Search public web pages. Requires approval.",
+    "Search public web pages. Already authorized while Web is enabled. Refine the query if results are insufficient.",
     { query: { type: "string" } },
     ["query"],
   ],
   [
     "web_read",
-    "Read a public HTTP(S) page and its links. Requires approval. No JavaScript rendering.",
+    "Read a public HTTP(S) page and its links. Already authorized while Web is enabled. No JavaScript rendering.",
     { url: { type: "string" } },
     ["url"],
   ],
@@ -125,7 +143,8 @@ class Extensions {
         const entries = this.items.filter((i) => i.kind === x.id);
         return {
           ...x,
-          canActivate: this.privileged || x.id !== "terminal",
+          canActivate:
+            this.privileged || !["terminal", "sandbox"].includes(x.id),
           state: entries.some((i) => i.enabled)
             ? "active"
             : entries.length
@@ -143,12 +162,13 @@ class Extensions {
   install(body) {
     if (
       !this.privileged &&
-      (body.kind === "terminal" || body.privateNetwork === true)
+      (["terminal", "sandbox"].includes(body.kind) ||
+        body.privateNetwork === true)
     )
       throw Error("Solo amministratore.");
     if (body.confirmed !== true)
       throw Error("Confirm plugin permissions before installing.");
-    if (!["web", "terminal", "mcp", "github"].includes(body.kind))
+    if (!["web", "terminal", "mcp", "github", "sandbox"].includes(body.kind))
       throw Error("Unsupported plugin format.");
     let item;
     if (body.kind === "mcp") {
@@ -213,6 +233,11 @@ class Extensions {
     return this.list();
   }
   available(name) {
+    if (name.startsWith("sandbox_"))
+      return (
+        this.privileged &&
+        this.items.some((i) => i.kind === "sandbox" && i.enabled)
+      );
     if (name.startsWith("github_"))
       return this.items.some(
         (i) =>
@@ -349,9 +374,11 @@ class Extensions {
         );
       }
     }
+    if (name === "sandbox_run")
+      return this.runner.create(workspace, "sandbox", true, args.command);
     if (name === "terminal_run")
       return this.runner.create(workspace, "terminal", true, args.command);
-    if (name === "terminal_status") {
+    if (["terminal_status", "sandbox_status"].includes(name)) {
       const job = this.runner
         .list()
         .find((j) => j.id === args.id && j.workspace === workspace);

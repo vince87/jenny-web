@@ -18,7 +18,7 @@ const listen = async (server) => {
       135, 137, 139, 143, 161, 179, 389, 427, 465, 512, 513, 514, 515, 526, 530,
       531, 532, 540, 548, 554, 556, 563, 587, 601, 636, 989, 990, 993, 995,
       1719, 1720, 1723, 2049, 3659, 4045, 5060, 5061, 6000, 6566, 6665, 6666,
-      6667, 6668, 6669, 6697, 10080,
+      6667, 6668, 6669, 6679, 6697, 10080, 4190,
     ]);
     if (!forbidden.has(port)) return `http://127.0.0.1:${port}`;
     await new Promise((resolve) => server.close(resolve));
@@ -214,7 +214,7 @@ test("HTTP: pagina reale, asset, health, autenticazione e origini", async (t) =>
     415,
   );
   assert.deepEqual((await x.api("/api/models")).body.models, ["local-test"]);
-  assert.equal((await x.api("/api/config")).body.version, "0.8.0");
+  assert.equal((await x.api("/api/config")).body.version, "0.9.0");
 });
 test("File: creazione, lettura, modifica, conflitto e separazione workspace", async (t) => {
   const { api } = await setup(t, async () => finish);

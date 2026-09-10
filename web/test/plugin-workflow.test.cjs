@@ -180,7 +180,7 @@ test("Explicit web chat searches before a text-only model and records real sourc
   });
   const s = app.agent.get(app.agent.create("principale").id),
     body = { content: "cerca il prezzo di young yng" };
-  await assert.rejects(prepareTurn(app.agent, s, body), /Conferma/);
+  await assert.rejects(prepareTurn(app.agent, s, body), /Attiva/);
   await assert.rejects(
     prepareTurn(app.agent, s, { ...body, webConfirmed: true }),
     /Attiva/,
@@ -188,6 +188,19 @@ test("Explicit web chat searches before a text-only model and records real sourc
   app.extensions.install({ kind: "web", confirmed: true });
   let modelCalls = 0;
   app.agent.provider.generate = async (payload) => {
+    if (payload.messages[0].content.includes("web research planner"))
+      return {
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                search: requests.length === 0,
+                query: "young yng prezzo",
+              }),
+            },
+          },
+        ],
+      };
     modelCalls++;
     assert.equal(requests.length, 1);
     assert.equal(payload.tools, undefined);
@@ -213,9 +226,63 @@ test("Explicit web chat searches before a text-only model and records real sourc
   assert.equal(modelCalls, 1);
   assert.equal(s.webSources[0].url, "https://example.org/quote");
   assert.equal(s.events.at(-1).name, "web_search");
+  assert.equal(s.messages[0].content, body.content);
+  assert.ok(!requests[0].includes("cerca"));
   assert.equal((await app.extensions.check("web", true)).ok, true);
   const check = app.extensions.list().installed[0].lastCheck;
   assert.equal(check.ok, true);
+  let step = 0;
+  app.extensions.execute = async (name) => {
+    assert.equal(name, "web_read");
+    return { text: "page body", links: [] };
+  };
+  app.agent.provider.generate = async (payload) => {
+    if (payload.messages[0].content.includes("web research planner"))
+      return {
+        choices: [{ message: { content: '{"search":false,"query":""}' } }],
+      };
+    return {
+      choices: [
+        {
+          message:
+            step++ === 0
+              ? {
+                  role: "assistant",
+                  content: null,
+                  tool_calls: [
+                    {
+                      id: "web-read-automatic",
+                      type: "function",
+                      function: {
+                        name: "web_read",
+                        arguments: '{"url":"https://example.org"}',
+                      },
+                    },
+                  ],
+                }
+              : { role: "assistant", content: "Read completed" },
+        },
+      ],
+    };
+  };
+  const next = await prepareTurn(app.agent, s, {
+    content: "Leggi la pagina indicata",
+  });
+  app.agent.send(s, next.content, "fixture", true, "it", next);
+  while (app.agent.controllers.size)
+    await new Promise((r) => setTimeout(r, 10));
+  assert.equal(s.status, "idle", s.error);
+  assert.equal(s.pending, null);
+  assert.equal(step, 2);
+  assert.equal(
+    s.messages.find((m) => m.tool_call_id === "web-read-automatic").role,
+    "tool",
+  );
+  app.extensions.manage({ id: "web", action: "disable" });
+  assert.equal(
+    (await prepareTurn(app.agent, s, { content: "Ciao" })).webPlanPending,
+    false,
+  );
 });
 test("MCP negotiates older HTTP versions and exposes discoverable tool schemas", async (t) => {
   const dir = await folder(t);

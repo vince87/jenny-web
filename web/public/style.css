@@ -1403,6 +1403,54 @@ footer a {
   margin-bottom: 1rem;
 }
 
+#pluginToggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  flex-shrink: 0;
+}
+.chat-plugin-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  flex-shrink: 0;
+}
+.chat-plugin-controls > button {
+  font-size: 12px;
+  min-height: 30px;
+}
+.chat-plugin-controls #pluginToggles {
+  order: 2;
+  width: 100%;
+  padding: 0;
+}
+.chat-plugin-controls #mentionMenu {
+  order: 3;
+  width: 100%;
+}
+#researchSources {
+  font-size: 12px;
+  padding: 6px 12px;
+  max-height: 60px;
+  overflow: auto;
+}
+#researchSources a {
+  margin-right: 12px;
+}
+#pluginToggles button[aria-pressed="true"] {
+  border: 2px solid var(--accent);
+}
+#memoryDialog {
+  width: min(650px, 92vw);
+}
+#memoryContent {
+  display: block;
+  width: 100%;
+  margin: 12px 0;
+}
 /* Workbench extensions: compact controls, visible focus, no hidden mobile actions. */
 :focus-visible {
   outline: 2px solid var(--accent);

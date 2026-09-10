@@ -41,11 +41,8 @@ async function prepareTurn(agent, s, body) {
       throw Error("Plugin @" + kind + " non attivo: apri il pannello Plugin.");
   }
   if (webSearch) {
-    if (body.webConfirmed !== true) throw Error("Conferma la ricerca web.");
     if (!agent.extensions?.available("web_search"))
       throw Error("Attiva il plugin Web dal pannello Plugin.");
-    if (intent.query.length > 300)
-      throw Error("Ricerca web: domanda di massimo 300 caratteri.");
   }
   const content =
     body.content +
@@ -56,10 +53,12 @@ async function prepareTurn(agent, s, body) {
   if (content.length > 16000)
     throw new Error("Messaggio e allegati oltre 16.000 caratteri.");
   return {
-    webSearchPending: webSearch ? intent.query : null,
+    webPlanPending: !!agent.extensions?.available("web_search"),
+    forceWeb: webSearch,
+    webSearchPending: null,
+    webReference: null,
     pluginMentions: intent.mentions,
-    directWebAnswer:
-      webSearch && !intent.mentions.some((kind) => kind !== "web"),
+    directWebAnswer: false,
     webSources: [],
     content,
     profile,

@@ -157,6 +157,21 @@ function textNode(tag, text, className) {
   return node;
 }
 function render() {
+  $("researchSources").replaceChildren();
+  const sources = session?.webSources || [];
+  $("researchSources").hidden = !sources.length;
+  for (const source of sources) {
+    try {
+      const url = new URL(source.url);
+      if (!["http:", "https:"].includes(url.protocol)) continue;
+      const link = document.createElement("a");
+      link.textContent = source.title || url.hostname;
+      link.href = url.href;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      $("researchSources").append(link);
+    } catch {}
+  }
   paintActivity();
   syncDraft();
   paintWorkbenchState();
@@ -427,12 +442,6 @@ $("composer").onsubmit = act(async (e) => {
     useTools = $("useTools").checked || intent.mentions.length > 0;
   let target = session;
   try {
-    if (webSearch) await ensureWebActive();
-    if (
-      webSearch &&
-      !confirm(t("Inviare questa richiesta al web?") + "\n" + intent.query)
-    )
-      return;
     if (!target)
       target = await api("/sessions", {
         workspace: current,

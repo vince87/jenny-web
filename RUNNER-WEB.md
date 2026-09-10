@@ -1,5 +1,7 @@
 # Runner opzionale — test isolati
 
+Dalla 0.9 il plugin **Lab** aggiunge una copia persistente di sviluppo con Python/venv, Node, Git e gh. Richiede la nuova immagine e il worker aggiornato: [LAB-WEB.md](LAB-WEB.md). Le ricette temporanee descritte sotto mantengono il comportamento precedente.
+
 L'utente sceglie una ricetta in **Strumenti progetto → Test isolati**, legge la conferma e approva. Dalla 0.6, installando **Terminale** nel catalogo plugin, può anche inviare un comando shell dalla GUI o approvare quello proposto dal modello. Il server registra il job. Un worker separato sul server Docker lo acquisisce con un lease monouso e restituisce il risultato.
 
 Il container web **non riceve il Docker socket**. Il worker è un componente fidato sull'host che dispone di Docker: proteggerne token e account come l'accesso al servizio. Usare un host dedicato per codice non fidato; l'isolamento container non equivale a una macchina virtuale.

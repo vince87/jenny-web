@@ -1,4 +1,8 @@
-# Jenny Web 0.8.0 — Plugin richiamabili con @ e ricerca esplicita
+# Jenny Web 0.9.0 — Ricerca iterativa, memoria e laboratorio
+
+Pulsanti plugin ON/OFF nella chat. Web acceso autorizza ricerche/letture senza conferme ripetute: il modello formula e rivaluta fino a tre query, anche senza @; i risultati tecnici non modificano il messaggio utente. Memoria e compressione: [MEMORY-WEB.md](MEMORY-WEB.md). Ambiente Python/Node persistente: [LAB-WEB.md](LAB-WEB.md), con build e worker separati obbligatori.
+
+Le sezioni storiche sotto descrivono le release precedenti; il consenso Web e la gestione del contesto della 0.9 sostituiscono le vecchie indicazioni su conferme e sola esclusione dei turni.
 
 Nuovi prompt dedicati ai plugin, menu `@`, ricerca prima della risposta con `@web` o «cerca…», stato e verifica connessioni, strumenti MCP con schema e GitHub personale via `gh`. Vedere [PLUGINS-WEB.md](PLUGINS-WEB.md). Per aggiornare il container è necessaria una nuova build; il server domestico non viene modificato automaticamente.
 

@@ -8,12 +8,14 @@
     const mentions = [
       ...new Set(
         [
-          ...String(content).matchAll(/(?:^|\s)@(web|github|mcp|terminal)\b/gi),
+          ...String(content).matchAll(
+            /(?:^|\s)@(web|github|mcp|terminal|sandbox)\b/gi,
+          ),
         ].map((m) => m[1].toLowerCase()),
       ),
     ];
     const query = String(content)
-      .replace(/(?:^|\s)@(web|github|mcp|terminal)\b/gi, " ")
+      .replace(/(?:^|\s)@(web|github|mcp|terminal|sandbox)\b/gi, " ")
       .trim();
     const explicit =
       /^(?:(?:per favore|please)\s+)?(?:cerca(?:mi)?|search(?: for)?|look up|puoi cercare|trova online|trova sul web|ricerca online)\b/i.test(

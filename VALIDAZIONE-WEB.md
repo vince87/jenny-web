@@ -1,4 +1,8 @@
-# Validazione Jenny Web 0.8.0
+# Validazione Jenny Web 0.9.0
+
+Suite locale 74 test: 72 passati, 2 POSIX esclusi su Windows. Copertura ricerca iterativa/stop/limiti, testo originale preservato, compaction e memoria con revisioni, parametri isolamento/persistenza Lab. Browser locale con account e provider fittizi: ON/OFF Web, ricerca senza conferma e senza JSON nel messaggio, fonte cliccabile, salvataggio e rilettura memoria dopo reload. Non prova il modello reale. Test Docker Lab aggiunto alla CI; esito da registrare.
+
+## Evidenza storica 0.8.0
 
 Suite locale: 70 test, 68 passati, 2 POSIX esclusi, zero fallimenti. Cinque nuovi test per intenti/menzioni, ricerca HTTP prima del modello testuale, GitHub (repository, ambiti, SHA, credenziali e conflitti) e MCP HTTP negoziato con discovery/schema. Corretto il fixture porte: accetta anche porte effimere basse purché non vietate da Fetch. Formattazione verificata. Provider e operazioni GitHub simulati: nuova GUI, modello reale, server MCP terzo e chiamate gh remote non ancora collaudati. Evidenze Docker precedenti non valgono come prova della 0.8.0.
 

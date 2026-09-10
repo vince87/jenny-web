@@ -50,12 +50,13 @@ class RunnerQueue {
   }
   create(workspace, recipe, confirmed, command) {
     if (
-      (!Object.hasOwn(RECIPES, recipe) && recipe !== "terminal") ||
+      (!Object.hasOwn(RECIPES, recipe) &&
+        !["terminal", "sandbox"].includes(recipe)) ||
       confirmed !== true
     )
       throw new Error("Conferma richiesta per il runner.");
     if (
-      recipe === "terminal" &&
+      ["terminal", "sandbox"].includes(recipe) &&
       (typeof command !== "string" ||
         !command.trim() ||
         command.length > 4000 ||
@@ -68,7 +69,7 @@ class RunnerQueue {
       id: randomUUID(),
       workspace,
       recipe,
-      ...(recipe === "terminal" ? { command } : {}),
+      ...(["terminal", "sandbox"].includes(recipe) ? { command } : {}),
       status: "queued",
       createdAt: new Date().toISOString(),
       output: "",

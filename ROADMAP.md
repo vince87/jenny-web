@@ -1,6 +1,14 @@
 # Jenny Web — roadmap operativa
 
-Ultimo aggiornamento: 2026-09-09 · Release di lavoro: **0.8.0**
+Ultimo aggiornamento: 2026-09-10 · Release di lavoro: **0.9.0**
+
+## Tranche 0.9
+
+- JW-053 — Implementato: toggle plugin in chat, prompt capacità, planner ricerca senza @, rivalutazione fino a tre query, Web senza conferme ripetute e fonti separate. Test simulati; browser ON/OFF e invio pulito verificati. Qualità sul modello reale da verificare.
+- JW-054 — Implementato: riepilogo automatico senza cancellazione storico, contesto limitato anche OpenAI-compatible, memoria progetto/account editabile e disattivabile, controllo revisioni concorrenti. Test conservazione e isolamento; browser salvataggio/rilettura verificato.
+- JW-055 — Implementato: laboratorio Docker persistente separato per progetto, Python/venv/Node/Git/gh, originali read-only, rete off salvo opt-in worker. Test argomenti e privilegi; smoke Docker aggiunto alla CI. Non equivale a desktop originale, PTY o pubblicazione automatica.
+
+Prossimo passo concreto: CI Docker con laboratorio persistente, pubblicazione ZIP 0.9.0, poi collaudo sul modello dell'utente. Nessuna modifica al server domestico. Guide LAB-WEB.md/MEMORY-WEB.md.
 
 ## Plugin e ricerca 0.8.0
 

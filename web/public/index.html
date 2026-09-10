@@ -30,7 +30,7 @@
         ><span class="brand-mark">j.</span>jenny<span class="brand-web"
           >web</span
         ></a
-      ><span class="release">PREVIEW / 0.7</span><span class="spacer"></span
+      ><span class="release">PREVIEW / 0.9</span><span class="spacer"></span
       ><label class="sr-only" for="language" data-i18n="Lingua">Lingua</label
       ><select id="language" aria-label="Lingua" data-i18n-aria-label="Lingua">
         <option value="it">Italiano</option>
@@ -158,20 +158,27 @@
             Esporta
           </button>
         </div>
-        <button id="extensionsButton" data-i18n="Plugin, Web e Terminale">
-          Plugin, Web e Terminale
-        </button>
-        <div id="pluginSummary" role="status"></div>
-        <button id="mentionButton" type="button" data-i18n="@ Scegli plugin">
-          @ Scegli plugin
-        </button>
-        <div id="mentionMenu" hidden role="group" aria-label="Plugin"></div>
-        <label class="web-chat-option"
-          ><input id="chatWebSearch" type="checkbox" />
-          <span data-i18n="Ricerca web prima della risposta"
-            >Ricerca web prima della risposta</span
-          >
-        </label>
+        <div class="chat-plugin-controls">
+          <button id="extensionsButton" data-i18n="Plugin, Web e Terminale">
+            Plugin, Web e Terminale
+          </button>
+          <div id="pluginSummary" role="status" hidden></div>
+          <div id="pluginToggles" aria-label="Plugin"></div>
+          <button id="memoryButton" data-i18n="Memoria progetto">
+            Memoria progetto
+          </button>
+          <button id="mentionButton" type="button" data-i18n="@ Scegli plugin">
+            @ Scegli plugin
+          </button>
+          <div id="mentionMenu" hidden role="group" aria-label="Plugin"></div>
+          <label class="web-chat-option" hidden
+            ><input id="chatWebSearch" type="checkbox" />
+            <span data-i18n="Ricerca web prima della risposta"
+              >Ricerca web prima della risposta</span
+            >
+          </label>
+        </div>
+        <div id="researchSources" hidden></div>
         <div class="run-status">
           <span id="chatState" data-i18n="Pronto per iniziare"
             >Pronto per iniziare</span
@@ -475,6 +482,31 @@
         </div>
       </section>
     </main>
+    <dialog id="memoryDialog">
+      <h2 data-i18n="Memoria progetto">Memoria progetto</h2>
+      <p
+        data-i18n="Memoria sintetica modificabile; lo storico completo resta nelle chat."
+      >
+        Memoria sintetica modificabile; lo storico completo resta nelle chat.
+      </p>
+      <label
+        ><input type="checkbox" id="memoryEnabled" /><span
+          data-i18n="Memoria automatica"
+          >Memoria automatica</span
+        ></label
+      >
+      <textarea
+        id="memoryContent"
+        maxlength="4000"
+        rows="12"
+        aria-label="Memory"
+      ></textarea>
+      <button id="memorySave" data-i18n="Salva">Salva</button>
+      <button id="memoryClear" data-i18n="Cancella memoria">
+        Cancella memoria
+      </button>
+      <button id="memoryClose" data-i18n="Chiudi">Chiudi</button>
+    </dialog>
     <dialog id="extensionsDialog" aria-labelledby="extensionsTitle">
       <h2 id="extensionsTitle" data-i18n="Plugin, Web e Terminale">
         Plugin, Web e Terminale
@@ -591,6 +623,12 @@
         worker Docker.
       </p>
       <form id="terminalForm">
+        <label
+          ><input type="checkbox" id="useLab" /><span
+            data-i18n="Laboratorio persistente"
+            >Laboratorio persistente</span
+          ></label
+        >
         <label for="terminalCommand" data-i18n="Comando">Comando</label
         ><textarea
           id="terminalCommand"

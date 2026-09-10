@@ -1,5 +1,7 @@
 # Plugin e ricerca — 0.8.0
 
+**Aggiornamento 0.9:** usare i pulsanti ON/OFF direttamente nella chat. Web abilitato autorizza ricerca e lettura senza ulteriori conferme. Il modello interpreta la domanda anche senza @, valuta i risultati e può effettuare fino a tre query differenti. Il comportamento letterale e la conferma della 0.8 descritti sotto sono superati. Nuovi plugin Lab e memoria: LAB-WEB.md e MEMORY-WEB.md.
+
 Scrivere `@` nella chat oppure usare «@ Scegli plugin». I prompt canonici in `web/plugin-prompts.cjs` descrivono strumenti, parametri, limiti e approvazioni. Sono aggiunti al contesto per i plugin attivi; una menzione dà priorità al plugin indicato e abilita i tool per quel turno. Non installa automaticamente GitHub o MCP e non sostituisce i permessi.
 
 - `@web cerca il prezzo di young yng`: dopo conferma, la ricerca avviene prima della richiesta al modello. Funziona anche con un modello senza tool calling. Anche «cerca il prezzo di young yng» attiva questo flusso; «cerca nel codice» no. La casella Ricerca web permette di scegliere esplicitamente lo stesso comportamento. Il motore resta quello del `.env`, incluso SearXNG a `http://192.168.10.250:8081`. Errori del motore sono mostrati, senza inventare risultati. Risultati web non equivalgono a un feed di quotazioni in tempo reale.
