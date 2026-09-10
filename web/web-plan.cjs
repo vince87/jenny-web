@@ -44,12 +44,10 @@ async function research(provider, extensions, session, signal, notify) {
               previousResults: results.map((r) => ({
                 query: r.query,
                 text: r.text.slice(0, 1200),
-                sources: r.sources
-                  .slice(0, 2)
-                  .map((x) => ({
-                    title: String(x.title).slice(0, 120),
-                    url: String(x.url).slice(0, 300),
-                  })),
+                sources: r.sources.slice(0, 2).map((x) => ({
+                  title: String(x.title).slice(0, 120),
+                  url: String(x.url).slice(0, 300),
+                })),
               })),
             }),
           },

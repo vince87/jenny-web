@@ -4,6 +4,8 @@ Ultimo aggiornamento: 2026-09-10 · Release di lavoro: **0.9.0**
 
 ## Tranche 0.9
 
+Pubblicazione non eseguita: il controllo autorizzazioni ha richiesto conferma esplicita del destinatario `vince87/jenny-web`. Commit locali e ZIP predisposti; Docker non disponibile qui e nuova CI non avviata. Prossimo passo: ottenere consenso al push su quel repository, eseguire CI e solo dopo pubblicare la release.
+
 - JW-053 — Implementato: toggle plugin in chat, prompt capacità, planner ricerca senza @, rivalutazione fino a tre query, Web senza conferme ripetute e fonti separate. Test simulati; browser ON/OFF e invio pulito verificati. Qualità sul modello reale da verificare.
 - JW-054 — Implementato: riepilogo automatico senza cancellazione storico, contesto limitato anche OpenAI-compatible, memoria progetto/account editabile e disattivabile, controllo revisioni concorrenti. Test conservazione e isolamento; browser salvataggio/rilettura verificato.
 - JW-055 — Implementato: laboratorio Docker persistente separato per progetto, Python/venv/Node/Git/gh, originali read-only, rete off salvo opt-in worker. Test argomenti e privilegi; smoke Docker aggiunto alla CI. Non equivale a desktop originale, PTY o pubblicazione automatica.

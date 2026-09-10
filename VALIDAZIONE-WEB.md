@@ -1,5 +1,7 @@
 # Validazione Jenny Web 0.9.0
 
+La nuova CI Docker non è stata avviata: push bloccato in attesa di autorizzazione esplicita alla destinazione GitHub. Docker non disponibile nell'ambiente locale. Il laboratorio è quindi implementato e testato a livello di argomenti/isolamento, ma la sua esecuzione Docker e persistenza reale non sono ancora verificate. ZIP locale, non release GitHub.
+
 Suite locale 74 test: 72 passati, 2 POSIX esclusi su Windows. Copertura ricerca iterativa/stop/limiti, testo originale preservato, compaction e memoria con revisioni, parametri isolamento/persistenza Lab. Browser locale con account e provider fittizi: ON/OFF Web, ricerca senza conferma e senza JSON nel messaggio, fonte cliccabile, salvataggio e rilettura memoria dopo reload. Non prova il modello reale. Test Docker Lab aggiunto alla CI; esito da registrare.
 
 ## Evidenza storica 0.8.0
