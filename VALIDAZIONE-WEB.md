@@ -1,5 +1,7 @@
 # Validazione Jenny Web 0.9.1
 
+CI Docker [34449551600](https://github.com/vince87/jenny-web/actions/runs/34449551600), commit `bdd61c5`: 75/75 test passati, zero esclusi. Riusciti worker isolato, laboratorio persistente (Python venv, Node, gh, offline) e login/persistenza Compose. Browser locale con account fittizio: menu vicino al modello, apertura e Web OFF → ON → OFF verificati. Server domestico non modificato; Gemma4 reale ancora da collaudare.
+
 75 test locali: 73 passati, 2 POSIX esclusi. Nuova regressione callback Ollama omessa; test una generazione per saluto con Web attivo, tool search/read automatici senza planner, schemi Web disponibili senza Agente coding. Nessuna prova sul modello Gemma4 reale. La CI precedente 0.9 [34446288101](https://github.com/vince87/jenny-web/actions/runs/34446288101) è riuscita; non attribuirla alla 0.9.1.
 
 ## Evidenza storica 0.9.0

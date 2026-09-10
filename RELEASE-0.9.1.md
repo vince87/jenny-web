@@ -1,5 +1,7 @@
 # Jenny Web 0.9.1
 
+Pubblicata su GitHub con CI Docker riuscita: [75/75 test, worker, Lab e Compose](https://github.com/vince87/jenny-web/actions/runs/34449551600). Menu e attivazione/disattivazione Web verificati nel browser locale.
+
 - Scelta della ricerca nel normale tool calling, senza inferenza preliminare per ogni messaggio.
 - Callback Ollama opzionale: corretti i falsi errori di connessione nelle chiamate interne senza streaming UI.
 - Limiti ricerca/pagine e rifiuto query duplicate; fonti e stato dalle operazioni reali.
