@@ -4,7 +4,7 @@ FROM ubuntu:24.04
 COPY --from=node-runtime /usr/local/ /usr/local/
 RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv python3-pip git gh ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY --chown=1000:1000 web /app/web
-RUN mkdir -p /labs && chown 1000:1000 /labs
+RUN mkdir -p /lab /labs && chown 1000:1000 /lab /labs
 USER 1000:1000
 WORKDIR /app
 ENV HOME=/labs/.home
