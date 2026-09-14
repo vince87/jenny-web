@@ -1,5 +1,15 @@
 # Runner opzionale — test isolati
 
+## Worker containerizzato 0.10
+
+La modalità consigliata non richiede più Node sull'host e non monta il Docker socket:
+
+```sh
+docker compose --profile lab up -d --build
+```
+
+Il servizio `lab-worker` usa `Dockerfile.lab`, condivide con Jenny una sola rete interna di controllo, legge `jenny-workspaces` in sola lettura e scrive soltanto nel volume `jenny-labs` o nel proprio `/tmp`. Configurare lo stesso `JENNY_WORKER_TOKEN` tramite `.env`. Il worker host descritto sotto rimane un'alternativa compatibile e non deve essere avviato contemporaneamente.
+
 Dalla 0.9 il plugin **Lab** aggiunge una copia persistente di sviluppo con Python/venv, Node, Git e gh. Richiede la nuova immagine e il worker aggiornato: [LAB-WEB.md](LAB-WEB.md). Le ricette temporanee descritte sotto mantengono il comportamento precedente.
 
 L'utente sceglie una ricetta in **Strumenti progetto → Test isolati**, legge la conferma e approva. Dalla 0.6, installando **Terminale** nel catalogo plugin, può anche inviare un comando shell dalla GUI o approvare quello proposto dal modello. Il server registra il job. Un worker separato sul server Docker lo acquisisce con un lease monouso e restituisce il risultato.

@@ -28,6 +28,9 @@ services:
     volumes:
       - jenny-data:/data
       - jenny-workspaces:/workspaces
+    networks:
+      - default
+      - lab-control
     read_only: true
     tmpfs:
       - /tmp:size=32m,mode=1777
@@ -35,6 +38,39 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+  lab-worker:
+    profiles: ["lab"]
+    build:
+      context: .
+      dockerfile: Dockerfile.lab
+    restart: unless-stopped
+    init: true
+    environment:
+      JENNY_URL: "http://jenny-web:3000"
+      JENNY_WORKER_TOKEN: "${JENNY_WORKER_TOKEN:-}"
+      WORKSPACES_DIR: "/workspaces"
+      LABS_DIR: "/labs"
+    depends_on:
+      - jenny-web
+    volumes:
+      - jenny-workspaces:/workspaces:ro
+      - jenny-labs:/labs
+    networks:
+      - lab-control
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 1g
+    cpus: 1
 volumes:
   jenny-data:
   jenny-workspaces:
+  jenny-labs:
+networks:
+  lab-control:
+    internal: true

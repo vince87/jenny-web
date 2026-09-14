@@ -1,6 +1,13 @@
 # Jenny Web — roadmap operativa
 
-Ultimo aggiornamento: 2026-09-10 · Release di lavoro: **0.9.1**
+Ultimo aggiornamento: 2026-09-14 · Release di lavoro: **0.10.0**
+
+## Tranche 0.10.0
+
+- JW-059 — Implementato, Docker da verificare: worker Lab Ubuntu containerizzato, opt-in tramite profilo Compose `lab`, senza Node sull'host e senza Docker socket. Rete di controllo interna, originali read-only, comandi temporanei in `/tmp` e copie persistenti per account/workspace nel volume `jenny-labs`.
+- Collaudo server 0.9.1: Gemma4 26B ha completato `read_file` e Web iterativo (`web_search` due volte, `web_read`) a circa 23 token/s. Diagnostica e memoria riuscite. Rilevati worker host assente/Node 18, GitHub personale configurato su repository errato e non connesso, nessun MCP configurato.
+
+Prossimo passo concreto: suite locale e CI Docker; poi aggiornare il server con `docker compose --profile lab up -d --build` e verificare Terminale temporaneo, persistenza Lab, isolamento rete e mancato write-back.
 
 ## Tranche 0.9.1
 

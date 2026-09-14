@@ -147,3 +147,18 @@ test("Lab jobs use private persistent volumes, read-only originals and no creden
   assert.ok(!a.join(" ").includes("docker.sock"));
   assert.ok(!a.join(" ").includes("GH_TOKEN"));
 });
+test("Container lab validates owners and derives isolated persistent directories", () => {
+  const { labName, validate } = require("../scripts/lab-worker.cjs");
+  const base = {
+    owner: "11111111-1111-1111-1111-111111111111",
+    legacy: false,
+    workspace: "one",
+    recipe: "sandbox",
+    command: "node --version",
+  };
+  validate(base);
+  assert.match(labName(base), /^[a-f0-9]{32}$/);
+  assert.notEqual(labName(base), labName({ ...base, workspace: "two" }));
+  assert.throws(() => validate({ ...base, workspace: "../escape" }));
+  assert.throws(() => validate({ ...base, command: "" }));
+});

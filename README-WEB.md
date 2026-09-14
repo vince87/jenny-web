@@ -1,4 +1,12 @@
-# Jenny Web 0.9.1 — Tool calling diretto e menu plugin
+# Jenny Web 0.10.0 — Lab Ubuntu autonomo
+
+Il profilo Compose `lab` avvia un secondo container con Node 24, Python, Git e gh. Consuma la coda Terminale/Lab direttamente, senza Node sull'host e senza Docker socket. Il workspace originale è montato in sola lettura; i comandi temporanei lavorano su una copia in `/tmp`, mentre il Lab conserva la propria copia nel volume `jenny-labs`. La rete del worker è interna a Compose e non offre accesso Internet.
+
+```sh
+docker compose --profile lab up -d --build
+```
+
+È necessario impostare `JENNY_WORKER_TOKEN` casuale di almeno 24 caratteri nel `.env`. La 0.9.1 e il worker host precedente restano documentati sotto per compatibilità.
 
 Dalla 0.9.1 non c'è più una chiamata preliminare per decidere se cercare: il modello risponde o chiama gli strumenti nel normale turno. Serve supporto tool calling. Il menu Plugin è vicino al modello; Web ON autorizza ricerche e letture senza conferme, Web OFF le blocca. Limiti: tre query diverse e cinque pagine per turno. Corretta la callback Ollama che poteva provocare un falso errore di connessione. Le descrizioni del planner delle versioni precedenti sotto sono storiche.
 

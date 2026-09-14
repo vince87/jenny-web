@@ -1,4 +1,8 @@
-# Validazione Jenny Web 0.9.1
+# Validazione Jenny Web 0.10.0
+
+JW-059 implementa un worker containerizzato opt-in senza Docker socket. Suite locale Node 24.19.0: 76 test, 74 passati e 2 controlli POSIX demandati alla CI Linux. Restano da eseguire build/Compose Docker e collaudo sul server. Il worker host della 0.9 non era attivo sul server (Node host 18.19.1); i job restavano correttamente in coda.
+
+Collaudo reale della 0.9.1 sul server, 2026-09-14: container ripristinato dopo rimozione confermata di un lock residuo e poi healthy. `gemma4:26b-a4b-it-qat` ha chiamato `read_file` e prodotto un riepilogo corretto a circa 22,8 token/s. Con Web ON ha effettuato due `web_search`, rivalutato il primo risultato insufficiente, chiamato `web_read` e citato correttamente python.org. Diagnostica dati/workspace/Ollama/tools e caricamento memoria riusciti. GitHub personale fallisce la verifica ed è configurato su `vince87/house-brain`, non `jenny-web`; MCP assente. Nessuna modifica ai workspace durante il collaudo.
 
 CI Docker [34449551600](https://github.com/vince87/jenny-web/actions/runs/34449551600), commit `bdd61c5`: 75/75 test passati, zero esclusi. Riusciti worker isolato, laboratorio persistente (Python venv, Node, gh, offline) e login/persistenza Compose. Browser locale con account fittizio: menu vicino al modello, apertura e Web OFF → ON → OFF verificati. Server domestico non modificato; Gemma4 reale ancora da collaudare.
 

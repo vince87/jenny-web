@@ -2,6 +2,8 @@
 
 Assistente locale di coding nel browser, con Ollama, workspace, approvazioni, ricerca SearXNG, MCP HTTP e terminale Docker isolato.
 
+La 0.10 aggiunge un worker Lab interamente containerizzato: Terminale e laboratorio persistente possono essere avviati con il profilo Compose `lab`, senza Node installato sull'host e senza montare il Docker socket.
+
 - [Avvio, configurazione e funzioni](README-WEB.md)
 - [Backup e ripristino](BACKUP-WEB.md)
 - [Worker terminale](RUNNER-WEB.md)

@@ -1,6 +1,11 @@
-FROM node:24-bookworm-slim
+FROM node:24-bookworm-slim AS node-runtime
+
+FROM ubuntu:24.04
+COPY --from=node-runtime /usr/local/ /usr/local/
 RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv python3-pip git gh ca-certificates && rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /lab && chown 1000:1000 /lab
+COPY --chown=1000:1000 web /app/web
+RUN mkdir -p /labs && chown 1000:1000 /labs
 USER 1000:1000
-WORKDIR /lab
-ENV HOME=/lab/.home
+WORKDIR /app
+ENV HOME=/labs/.home
+CMD ["node", "/app/web/scripts/lab-worker.cjs"]

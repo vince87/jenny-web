@@ -214,7 +214,7 @@ test("HTTP: pagina reale, asset, health, autenticazione e origini", async (t) =>
     415,
   );
   assert.deepEqual((await x.api("/api/models")).body.models, ["local-test"]);
-  assert.equal((await x.api("/api/config")).body.version, "0.9.1");
+  assert.equal((await x.api("/api/config")).body.version, "0.10.0");
 });
 test("File: creazione, lettura, modifica, conflitto e separazione workspace", async (t) => {
   const { api } = await setup(t, async () => finish);
